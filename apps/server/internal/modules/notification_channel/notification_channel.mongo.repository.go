@@ -3,8 +3,9 @@ package notification_channel
 import (
 	"context"
 	"errors"
-	"peekaping/internal/config"
-	"peekaping/internal/utils"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -22,6 +23,7 @@ type mongoModel struct {
 	Config    *string            `bson:"config,omitempty"`
 	CreatedAt time.Time          `bson:"created_at"`
 	UpdatedAt time.Time          `bson:"updated_at"`
+	GroupID   primitive.ObjectID `bson:"group_id,omitempty"`
 }
 
 func toDomainModel(mm *mongoModel) *Model {
@@ -48,6 +50,10 @@ func NewMongoRepository(db *mongo.Client, cfg *config.Config) Repository {
 }
 
 func (r *RepositoryImpl) Create(ctx context.Context, entity *Model) (*Model, error) {
+	groupID, _, err := auth.MongoGroupIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	now := time.Now()
 	mm := &mongoModel{
 		ID:        primitive.NewObjectID(),
@@ -58,9 +64,10 @@ func (r *RepositoryImpl) Create(ctx context.Context, entity *Model) (*Model, err
 		Config:    entity.Config,
 		CreatedAt: now,
 		UpdatedAt: now,
+		GroupID:   groupID,
 	}
 
-	_, err := r.collection.InsertOne(ctx, mm)
+	_, err = r.collection.InsertOne(ctx, mm)
 	if err != nil {
 		return nil, err
 	}
@@ -77,6 +84,9 @@ func (r *RepositoryImpl) FindByID(ctx context.Context, id string) (*Model, error
 	}
 
 	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
 	err = r.collection.FindOne(ctx, filter).Decode(&mm)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
@@ -96,11 +106,14 @@ func (r *RepositoryImpl) FindAll(ctx context.Context, page int, limit int, q str
 
 	// Build filter
 	filter := bson.M{}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
 	if q != "" {
-		filter = bson.M{"$or": []bson.M{
+		filter["$or"] = []bson.M{
 			{"name": bson.M{"$regex": q, "$options": "i"}},
 			{"type": bson.M{"$regex": q, "$options": "i"}},
-		}}
+		}
 	}
 
 	// Define options for pagination
@@ -146,6 +159,9 @@ func (r *RepositoryImpl) UpdateFull(ctx context.Context, id string, entity *Mode
 	entity.UpdatedAt = time.Now()
 
 	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return err
+	}
 	update := bson.M{"$set": entity}
 	_, err = r.collection.UpdateOne(ctx, filter, update)
 	return err
@@ -170,6 +186,9 @@ func (r *RepositoryImpl) UpdatePartial(ctx context.Context, id string, entity *U
 	set["updated_at"] = time.Now()
 
 	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return err
+	}
 	update := bson.M{"$set": set}
 
 	_, err = r.collection.UpdateOne(ctx, filter, update)
@@ -183,6 +202,20 @@ func (r *RepositoryImpl) Delete(ctx context.Context, id string) error {
 	}
 
 	filter := bson.M{"_id": objectId}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return err
+	}
 	_, err = r.collection.DeleteOne(ctx, filter)
 	return err
+}
+
+func addGroupScope(ctx context.Context, filter bson.M) error {
+	groupID, scoped, err := auth.MongoGroupIDFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	if scoped {
+		filter["group_id"] = groupID
+	}
+	return nil
 }

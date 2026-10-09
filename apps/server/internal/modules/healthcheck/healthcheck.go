@@ -1,8 +1,8 @@
 package healthcheck
 
 import (
-	"peekaping/internal/modules/events"
-	"peekaping/internal/modules/healthcheck/executor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/events"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/healthcheck/executor"
 
 	"go.uber.org/zap"
 )

@@ -1,4 +1,4 @@
-# Peekaping - the best uptime kuma alternative
+# Pulsewatch - self-hosted uptime monitoring
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Go](https://img.shields.io/badge/go-%23007d9c.svg?style=flat&logo=go&logoColor=white)
@@ -7,60 +7,61 @@
 ![MongoDB](https://img.shields.io/badge/mongodb-4ea94b.svg?style=flat&logo=mongodb&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/postgresql-%23336791.svg?style=flat&logo=postgresql&logoColor=white)
 ![SQLite](https://img.shields.io/badge/sqlite-%2307405e.svg?style=flat&logo=sqlite&logoColor=white)
-![Docker Pulls](https://img.shields.io/docker/pulls/0xfurai/peekaping-web)
+![Legacy Docker image pulls](https://img.shields.io/docker/pulls/0xfurai/peekaping-web)
 
 **A modern, self-hosted uptime monitoring solution**
 
-Peekaping is a uptime monitoring system built with Golang and React. You can monitor your websites, API and many more leveraging beautiful status pages, alert notifications.
+Pulsewatch is a community hard fork of Peekaping, a Go and React uptime monitoring system. It monitors websites, APIs, and services with status pages and alert notifications.
 
-🔗 Website **[peekaping.com](https://peekaping.com)**
+🔗 **[Pulsewatch project site](https://sanyam-malik.github.io/pulsewatch)**
 
-🔗 Live Demo **[demo.peekaping.com](https://demo.peekaping.com)**
+🔗 Upstream demo **[demo.peekaping.com](https://demo.peekaping.com)**
 
-🔗 Documentation **[docs.peekaping.com](https://docs.peekaping.com)**
+🔗 **[Pulsewatch documentation](https://sanyam-malik.github.io/pulsewatch/docs)**
 
-🔗 Community terraform provider **[registry.terraform.io/providers/tafaust/peekaping](https://registry.terraform.io/providers/tafaust/peekaping/latest)**
+🔗 Upstream Terraform provider **[registry.terraform.io/providers/tafaust/peekaping](https://registry.terraform.io/providers/tafaust/peekaping/latest)**
 
-## Why Peekaping Is the Optimal Alternative to Uptime Kuma
+## Why Pulsewatch Is an Alternative to Uptime Kuma
 
-Peekaping is a modern uptime monitoring solution designed with the requirements of professional DevOps teams in mind, addressing the key limitations of traditional monitoring systems.
+Pulsewatch continues the upstream project with an API-first architecture and a focus on extensible monitoring for DevOps teams.
 
 **Key Advantages:**
 - **API-first architecture** — all system functions are accessible through a RESTful API, ensuring complete automation and seamless integration with CI/CD processes and Infrastructure as Code tools
 - **Easily extensible server architecture** — the modular structure allows adding new monitor types and notification channels without modifying the system core
 - **Server built with Golang** — using one of the most performant compiled languages ensures high speed with minimal consumption of RAM and CPU resources
 - **Unmatched stability** — thanks to a typed client and compiled Golang language, the system demonstrates high reliability and predictable operation
-Modern and intuitive interface — clean user interface design built on contemporary UI/UX principles
+- **Modern interface** — clean user interface design built on contemporary UI/UX principles
 - **Flexible storage options** — support for three popular databases (SQLite / PostgreSQL / MongoDB) allows adapting the solution to any infrastructure
 - **API key management and access control** — built-in security system with access rights management and API keys provides enterprise-level protection
 
 
 ## ⚠️ Beta Status
 
-**Peekaping is currently in beta and actively being developed.**
+**Pulsewatch is a community-maintained hard fork.**
 Please note:
 
-- The software is still under active development
+- The fork is under active development
 - Some features could be changed
 - I recommend testing in non-production environments first
 - Please report any issues you encounter - your feedback helps us improve!
 
-Please try Peekaping and provide feedback, this is huge contribution for us! Let's make Peekaping production ready.
+Please try Pulsewatch and provide feedback. Contributions help improve the fork.
 
 ## Quick start (docker + SQLite)
 
 ```bash
+docker build -f Dockerfile.bundle.sqlite -t pulsewatch-bundle-sqlite:local .
 docker run -d --restart=always \
   -p 8383:8383 \
   -e DB_NAME=/app/data/peekaping.db \
   -v $(pwd)/.data/sqlite:/app/data \
-  --name peekaping \
-  0xfurai/peekaping-bundle-sqlite:latest
+  --name pulsewatch \
+  pulsewatch-bundle-sqlite:local
 ```
 
-[Docker + SQLite Setup](https://docs.peekaping.com/self-hosting/docker-with-sqlite)
+[Docker + SQLite Setup](https://sanyam-malik.github.io/pulsewatch/docs/self-hosting/docker-with-sqlite)
 
-Peekaping also support [PostgreSQL Setup](https://docs.peekaping.com/self-hosting/docker-with-postgres) and [MongoDB Setup](https://docs.peekaping.com/self-hosting/docker-with-mongo). Read docs for more guidance
+The existing published image coordinates and SQLite filename (`peekaping.db`) retain their upstream names for compatibility with existing deployments. Those published images are maintained upstream and may not include Pulsewatch features; build from this repository to run the fork. The setup guides also describe [PostgreSQL](https://sanyam-malik.github.io/pulsewatch/docs/self-hosting/docker-with-postgres) and [MongoDB](https://sanyam-malik.github.io/pulsewatch/docs/self-hosting/docker-with-mongo) setup.
 
 ## ⚡ Features
 
@@ -78,10 +79,13 @@ Peekaping also support [PostgreSQL Setup](https://docs.peekaping.com/self-hostin
 - Microsoft SQL Server
 - MongoDB
 - Redis
-- MySQL/MariaDB -
+- MySQL/MariaDB
 - MQTT Broker
 - RabbitMQ
 - Kafka Producer
+- Steam (Source A2S_INFO)
+- GameDig-compatible A2S servers
+- Playwright browser checks (remote Chromium DevTools)
 
 ### 🔔 Alert Channels
 
@@ -107,6 +111,13 @@ Peekaping also support [PostgreSQL Setup](https://docs.peekaping.com/self-hostin
 - LINE Messenger
 - PagerTree
 - Pushbullet
+- Microsoft Teams
+- WhatsApp (Whapi.Cloud)
+- CallMeBot (WhatsApp, Telegram, Facebook Messenger)
+- Aliyun SMS
+- DingDing
+- ClickSend SMS
+- Rocket.Chat
 
 ### ✨ Other
 
@@ -115,15 +126,19 @@ Peekaping also support [PostgreSQL Setup](https://docs.peekaping.com/self-hostin
 - Multi-Factor Authentication (MFA)
 - Brute-Force Login Protection
 - SSL Certificate Expiration Checks
+- Multi-user workspaces with owner, admin, member, and viewer roles
+- Monitor groups
+- Status-page incident timelines
+- HTTP status, response-time, and JSON response conditions
 
-## 💡 Motivation Behind Creating an Uptime Kuma Alternative
+## 💡 Motivation and upstream
 
-The creation of Peekaping was inspired by our experience using Uptime Kuma — a popular open-source monitoring solution. We deeply respect this project and its contribution to the community, but we aimed to address the systemic limitations that teams face when scaling and integrating monitoring into modern DevOps processes.
+Pulsewatch is a hard fork of Peekaping, which was inspired by Uptime Kuma — a popular open-source monitoring solution. This fork retains the upstream project's MIT license and acknowledges its contributors.
 
-Our goal is to build a new system that combines the features requested by the community with modern technological approaches: strict typing and extensible architecture.
+This fork continues the upstream project's API-first, strongly typed architecture while adding community-requested capabilities.
 
 **Our Approach:**
-**API as the foundation.** We designed Peekaping from the ground up as an API-first solution, where every function is accessible programmatically. This opens up possibilities for complete automation and integration with any tools.
+**API as the foundation.** The upstream project was designed as an API-first solution, where system functions are accessible programmatically.
 
 **Performance through the right technology choices.** The server side is implemented in Golang — a fast and efficient language that delivers high performance with minimal RAM consumption. This is especially critical when monitoring a large number of services.
 
@@ -131,45 +146,44 @@ Our goal is to build a new system that combines the features requested by the co
 
 **Reliable client side.** The frontend is built with React and TypeScript, ensuring not only high performance but also reliability thanks to static typing. The client side was also designed with ease of extension in mind.
 
-Peekaping is the ideal choice for teams that need a reliable and customizable uptime monitoring solution capable of growing alongside their infrastructure.
+Pulsewatch aims to provide a reliable and customizable uptime monitoring solution capable of growing alongside your infrastructure.
 
 
-![Peekaping Dashboard](./pictures/monitor.png)
+![Pulsewatch Dashboard](./pictures/monitor.png)
 
-## 📡 Stay in the Loop
+## 📡 Upstream updates
 
-I share quick tips, dev-logs, and behind-the-scenes updates on&nbsp;Twitter.
-If you enjoy this project, come say hi &amp; follow along!
+The original maintainer shares updates on X.
 
-[![Follow me on X](https://img.shields.io/twitter/follow/your_handle?label=Follow&style=social)](https://x.com/0xfurai)
+[![Follow the upstream maintainer on X](https://img.shields.io/twitter/follow/0xfurai?label=Follow&style=social)](https://x.com/0xfurai)
 
 ## 🚧 Development roadmap
 
 ### General
 
-- [ ] Incidents
-- [ ] Migration tool (from uptime kuma)
-- [ ] Multi user, groups, access levels
-- [ ] Group monitors
-- [ ] Add support for Homepage widget (in progress)
-- [ ] Gatus like conditions
+- [x] Incidents
+- [x] Migration tool (from Uptime Kuma)
+- [x] Multi user, groups, access levels
+- [x] Group monitors
+- [x] Add support for Homepage widget
+- [x] Gatus-like HTTP response conditions (status, response time, and JSON path)
 
 ### Monitors
 
-- [ ] HTTPs keyword and JSON query
-- [ ] Steam
-- [ ] GameDig
-- [ ] Playwrite
+- [x] HTTPS keyword and JSON query checks
+- [x] Steam (Source A2S_INFO)
+- [x] GameDig (Source A2S-compatible servers)
+- [x] Playwright browser checks (remote Chromium DevTools endpoint)
 
 ### Notification channels
 
-- [ ] Microsoft Teams
-- [ ] WhatsApp (Whapi)
-- [ ] CallMeBot (WhatsApp, Telegram Call, Facebook Messanger)
-- [ ] AliyunSMS (阿里云短信服务)
-- [ ] DingDing (钉钉)
-- [ ] ClickSend SMS
-- [ ] Rocket.Chat
+- [x] Microsoft Teams
+- [x] WhatsApp (Whapi)
+- [x] CallMeBot (WhatsApp, Telegram Call, Facebook Messenger)
+- [x] AliyunSMS (阿里云短信服务)
+- [x] DingDing (钉钉)
+- [x] ClickSend SMS
+- [x] Rocket.Chat
 
 ![Alt](https://repobeats.axiom.co/api/embed/747c845fe0118082b51a1ab2fc6f8a4edd73c016.svg "Repobeats analytics image")
 
@@ -189,9 +203,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
+- Hard forked from [Peekaping](https://github.com/0xfurai/peekaping); thanks to the original authors and contributors.
 - Inspired by [Uptime Kuma](https://github.com/louislam/uptime-kuma)
 - Built with amazing open-source technologies
-- Thanks to all contributors and users
+- Thanks to all Pulsewatch contributors and users
 
 ## 📞 Support
 
@@ -199,7 +214,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Made with ❤️ by the Peekaping team**
+**Maintained by the Pulsewatch community; built on the Peekaping project**
 
 ## Criteria to Consider When Looking for Uptime Kuma Alternatives
 When choosing an Uptime Kuma alternative, it's important to consider the technology stack and architecture. Solutions built with compiled languages (Go, Rust) deliver better performance and consume fewer resources. An API-first approach is critical for automation and integration with CI/CD processes.
@@ -209,4 +224,4 @@ Ensure the system supports the necessary monitoring protocols (HTTP/HTTPS, TCP, 
 ## How to Choose the Right Uptime Kuma Alternative
 Determine the deployment format based on your capabilities and requirements. Self-hosted solutions provide complete control over data and deep customization options, but require technical resources for deployment and maintenance. Cloud solutions offer quick setup and automatic updates, but come with customization limitations and monthly subscriptions.
 
-Conduct practical testing: deploy the system, create real monitors of different types, simulate failures, and evaluate detection speed. Check resource consumption under load, ease of API integrations, and interface quality. Teams choose Peekaping when they need high performance, API-first architecture, and freedom from vendor lock-in.
+Conduct practical testing: deploy the system, create real monitors of different types, simulate failures, and evaluate detection speed. Check resource consumption under load, ease of API integrations, and interface quality. Pulsewatch is intended for teams that need a high-performance, API-first monitor with freedom from vendor lock-in.

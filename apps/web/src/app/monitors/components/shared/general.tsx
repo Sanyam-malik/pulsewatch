@@ -104,6 +104,18 @@ const General = () => {
       type: "kafka-producer",
       description: t("monitors.form.type.kafka"),
     },
+    {
+      type: "steam",
+      description: "Steam server",
+    },
+    {
+      type: "gamedig",
+      description: "GameDig server",
+    },
+    {
+      type: "playwright",
+      description: "Playwright browser",
+    },
   ], [t]);
 
   return (

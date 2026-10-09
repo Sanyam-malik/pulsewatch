@@ -5,11 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/version"
 	"net/http"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/modules/shared"
-	"peekaping/internal/version"
 	"time"
 
 	"go.uber.org/zap"
@@ -108,7 +108,7 @@ func (w *WeComSender) Send(
 
 	// Set request headers
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "Peekaping-WeCom/"+version.Version)
+	req.Header.Set("User-Agent", "Pulsewatch-WeCom/"+version.Version)
 
 	// Send HTTP request
 	resp, err := w.client.Do(req)

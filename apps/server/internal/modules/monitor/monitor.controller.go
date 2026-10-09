@@ -3,11 +3,11 @@ package monitor
 import (
 	"errors"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_notification"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_tag"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_tls_info"
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
 	"net/http"
-	"peekaping/internal/modules/monitor_notification"
-	"peekaping/internal/modules/monitor_tag"
-	"peekaping/internal/modules/monitor_tls_info"
-	"peekaping/internal/utils"
 	"strings"
 	"time"
 
@@ -468,6 +468,10 @@ func (ic *MonitorController) Delete(ctx *gin.Context) {
 	err := ic.monitorService.Delete(ctx, id)
 	if err != nil {
 		ic.logger.Errorw("Failed to delete monitor", "error", err)
+		if errors.Is(err, ErrMonitorNotFound) {
+			ctx.JSON(http.StatusNotFound, utils.NewFailResponse("Monitor not found"))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, utils.NewFailResponse("Internal server error"))
 		return
 	}
@@ -528,6 +532,10 @@ func (ic *MonitorController) FindByMonitorIDPaginated(ctx *gin.Context) {
 	results, err := ic.monitorService.GetHeartbeats(ctx, id, limit, page, importantPtr, reverse)
 	if err != nil {
 		ic.logger.Errorw("Failed to get heartbeats", "error", err)
+		if errors.Is(err, ErrMonitorNotFound) {
+			ctx.JSON(http.StatusNotFound, utils.NewFailResponse("Monitor not found"))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, utils.NewFailResponse("Internal server error"))
 		return
 	}
@@ -624,6 +632,10 @@ func (ic *MonitorController) GetUptimeStats(ctx *gin.Context) {
 	stats, err := ic.monitorService.GetUptimeStats(ctx, id)
 	if err != nil {
 		ic.logger.Errorw("Failed to get uptime stats (short)", "error", err)
+		if errors.Is(err, ErrMonitorNotFound) {
+			ctx.JSON(http.StatusNotFound, utils.NewFailResponse("Monitor not found"))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, utils.NewFailResponse("Internal server error"))
 		return
 	}

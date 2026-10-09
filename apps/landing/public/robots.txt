@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://peekaping.com/sitemap-index.xml
+Sitemap: https://sanyam-malik.github.io/pulsewatch/sitemap-index.xml
+Sitemap: https://sanyam-malik.github.io/pulsewatch/docs/sitemap.xml

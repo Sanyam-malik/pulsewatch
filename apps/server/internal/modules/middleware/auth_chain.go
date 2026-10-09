@@ -1,10 +1,10 @@
 package middleware
 
 import (
+	"github.com/sanyam-malik/pulsewatch/internal/modules/api_key"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
 	"net/http"
-	"peekaping/internal/modules/api_key"
-	"peekaping/internal/modules/auth"
-	"peekaping/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

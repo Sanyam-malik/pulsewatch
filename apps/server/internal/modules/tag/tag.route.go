@@ -1,7 +1,7 @@
 package tag
 
 import (
-	"peekaping/internal/modules/middleware"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/middleware"
 
 	"github.com/gin-gonic/gin"
 )

@@ -5,11 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/version"
 	"net/http"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/modules/shared"
-	"peekaping/internal/version"
 	"time"
 
 	"go.uber.org/zap"
@@ -91,7 +91,7 @@ func (p *PushoverSender) Send(
 	if cfg.Title != "" {
 		payload["title"] = cfg.Title
 	} else {
-		payload["title"] = "Peekaping Notification"
+		payload["title"] = "Pulsewatch Notification"
 	}
 
 	// Set priority (default to 0 if not specified)
@@ -129,7 +129,7 @@ func (p *PushoverSender) Send(
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "Peekaping-Pushover/"+version.Version)
+	req.Header.Set("User-Agent", "Pulsewatch-Pushover/"+version.Version)
 
 	// Send request
 	resp, err := p.client.Do(req)

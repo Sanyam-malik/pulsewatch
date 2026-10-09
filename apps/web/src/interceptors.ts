@@ -30,6 +30,16 @@ const processQueue = (error: unknown = null, token: string | null = null) => {
 };
 
 export const setupInterceptors = () => {
+  client.instance.interceptors.request.use((config) => {
+    const activeGroupID = useAuthStore.getState().activeGroupID;
+    if (activeGroupID) {
+      config.headers.set("X-Group-ID", activeGroupID);
+    } else {
+      config.headers.delete("X-Group-ID");
+    }
+    return config;
+  });
+
   client.instance.interceptors.response.use(
     (response: AxiosResponse) => response,
     async (error: AxiosError) => {

@@ -3,9 +3,9 @@ package status_page
 import (
 	"context"
 	"fmt"
-	"peekaping/internal/modules/domain_status_page"
-	"peekaping/internal/modules/events"
-	"peekaping/internal/modules/monitor_status_page"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/domain_status_page"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/events"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_status_page"
 
 	"go.uber.org/zap"
 )
@@ -25,7 +25,7 @@ type Service interface {
 
 type ServiceImpl struct {
 	repository               Repository
-	eventBus events.EventBus
+	eventBus                 events.EventBus
 	monitorStatusPageService monitor_status_page.Service
 	domainStatusPageService  domain_status_page.Service
 	logger                   *zap.SugaredLogger

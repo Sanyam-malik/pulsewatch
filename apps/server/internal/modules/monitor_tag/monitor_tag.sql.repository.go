@@ -2,6 +2,8 @@ package monitor_tag
 
 import (
 	"context"
+	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
 	"time"
 
 	"github.com/google/uuid"
@@ -47,6 +49,21 @@ func NewSQLRepository(db *bun.DB) Repository {
 }
 
 func (r *SQLRepositoryImpl) Create(ctx context.Context, model *Model) (*Model, error) {
+	if groupID, scoped := auth.GroupIDFromContext(ctx); scoped {
+		monitorExists, err := r.db.NewSelect().Table("monitors").Column("id").
+			Where("id = ? AND group_id = ?", model.MonitorID, groupID).Exists(ctx)
+		if err != nil {
+			return nil, err
+		}
+		tagExists, err := r.db.NewSelect().Table("tags").Column("id").
+			Where("id = ? AND group_id = ?", model.TagID, groupID).Exists(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if !monitorExists || !tagExists {
+			return nil, fmt.Errorf("monitor and tag must belong to the selected group")
+		}
+	}
 	sm := toSQLModel(model)
 	sm.ID = uuid.New().String()
 	sm.CreatedAt = time.Now()

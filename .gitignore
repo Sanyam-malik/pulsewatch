@@ -4,6 +4,7 @@
 node_modules
 .pnp
 .pnp.js
+.idea/
 
 # Local env files
 .env
@@ -26,6 +27,12 @@ coverage
 out/
 build
 dist
+/bin/
+/apps/server/api
+/apps/server/bun
+/apps/server/ingester
+/apps/server/producer
+/apps/server/worker
 
 
 # Debug

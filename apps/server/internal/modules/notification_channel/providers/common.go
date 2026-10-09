@@ -3,9 +3,9 @@ package providers
 import (
 	"encoding/json"
 	"fmt"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/utils"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
 )
 
 func GenericValidator[T any](cfg *T) error {

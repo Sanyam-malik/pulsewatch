@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"peekaping/internal/modules/events"
-	"peekaping/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/events"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

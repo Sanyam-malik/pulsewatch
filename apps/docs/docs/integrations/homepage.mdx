@@ -1,0 +1,30 @@
+---
+title: Homepage integration
+---
+
+# Homepage integration
+
+Pulsewatch exposes status-page monitor data through a public JSON endpoint that can be consumed by Homepage's Custom API widget.
+
+## Prepare a status page
+
+Create a status page in Pulsewatch and add the monitors you want to display. Use its slug in the endpoint below.
+
+## Configure Homepage
+
+Use this URL in a Homepage Custom API widget:
+
+```text
+https://<pulsewatch-host>/api/v1/status-pages/slug/<status-page-slug>/monitors/homepage
+```
+
+The endpoint is public and does not require an API token. It returns the standard Pulsewatch API response envelope. The `data` array contains each configured monitor's `id`, `type`, `name`, and `active` flag, its latest heartbeat, and its 24-hour uptime percentage (`uptime_24h`). An empty `data` array means the status page has no monitors to show.
+
+Example:
+
+```sh
+curl --fail --silent \
+  "https://<pulsewatch-host>/api/v1/status-pages/slug/<status-page-slug>/monitors/homepage"
+```
+
+Only expose a status page's monitors if they are safe to publish: anyone who can reach this endpoint can read its response.

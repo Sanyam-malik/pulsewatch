@@ -2,8 +2,8 @@ package setting
 
 import (
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
 	"net/http"
-	"peekaping/internal/utils"
 
 	"regexp"
 

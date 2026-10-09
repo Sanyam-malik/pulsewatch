@@ -12,7 +12,7 @@ redis:
   #   password: peekaping
 
 # See docs for configuration details
-# https://docs.peekaping.com/architecture/api-server
+# https://sanyam-malik.github.io/pulsewatch/docs/architecture/api-server
 config:
   existingSecret: "peekaping-config"
   env:

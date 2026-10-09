@@ -7,7 +7,8 @@ import tailwindcss from "@tailwindcss/vite";
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://peekaping.com',
+	site: 'https://sanyam-malik.github.io/pulsewatch',
+	base: '/pulsewatch/',
 	integrations: [mdx(), sitemap()],
 	vite: {
     plugins: [tailwindcss()],

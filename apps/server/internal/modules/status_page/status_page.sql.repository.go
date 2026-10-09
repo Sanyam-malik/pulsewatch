@@ -2,6 +2,7 @@ package status_page
 
 import (
 	"context"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,6 +23,7 @@ type sqlModel struct {
 	UpdatedAt           time.Time `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
 	FooterText          string    `bun:"footer_text"`
 	AutoRefreshInterval int       `bun:"auto_refresh_interval,notnull,default:30"`
+	GroupID             string    `bun:"group_id"`
 }
 
 func toDomainModelFromSQL(sm *sqlModel) *Model {
@@ -70,7 +72,13 @@ func (r *SQLRepositoryImpl) Create(ctx context.Context, statusPage *Model) (*Mod
 	sm.CreatedAt = time.Now()
 	sm.UpdatedAt = time.Now()
 
-	_, err := r.db.NewInsert().Model(sm).Returning("*").Exec(ctx)
+	query := r.db.NewInsert().Model(sm).Returning("*")
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		sm.GroupID = groupID
+	} else {
+		query = query.Column("id", "slug", "title", "description", "icon", "theme", "published", "created_at", "updated_at", "footer_text", "auto_refresh_interval")
+	}
+	_, err := query.Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +88,11 @@ func (r *SQLRepositoryImpl) Create(ctx context.Context, statusPage *Model) (*Mod
 
 func (r *SQLRepositoryImpl) FindByID(ctx context.Context, id string) (*Model, error) {
 	sm := new(sqlModel)
-	err := r.db.NewSelect().Model(sm).Where("id = ?", id).Scan(ctx)
+	query := r.db.NewSelect().Model(sm).ExcludeColumn("group_id").Where("id = ?", id)
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	err := query.Scan(ctx)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			return nil, nil
@@ -92,7 +104,11 @@ func (r *SQLRepositoryImpl) FindByID(ctx context.Context, id string) (*Model, er
 
 func (r *SQLRepositoryImpl) FindBySlug(ctx context.Context, slug string) (*Model, error) {
 	sm := new(sqlModel)
-	err := r.db.NewSelect().Model(sm).Where("slug = ?", slug).Scan(ctx)
+	query := r.db.NewSelect().Model(sm).ExcludeColumn("group_id").Where("slug = ?", slug)
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	err := query.Scan(ctx)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			return nil, nil
@@ -109,6 +125,10 @@ func (r *SQLRepositoryImpl) FindAll(
 	q string,
 ) ([]*Model, error) {
 	query := r.db.NewSelect().Model((*sqlModel)(nil))
+	query = query.ExcludeColumn("group_id")
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
 
 	if q != "" {
 		query = query.Where("LOWER(title) LIKE ? OR LOWER(description) LIKE ?", "%"+q+"%", "%"+q+"%")
@@ -133,6 +153,9 @@ func (r *SQLRepositoryImpl) FindAll(
 
 func (r *SQLRepositoryImpl) Update(ctx context.Context, id string, statusPage *UpdateModel) error {
 	query := r.db.NewUpdate().Model((*sqlModel)(nil)).Where("id = ?", id)
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
 
 	hasUpdates := false
 
@@ -181,6 +204,10 @@ func (r *SQLRepositoryImpl) Update(ctx context.Context, id string, statusPage *U
 }
 
 func (r *SQLRepositoryImpl) Delete(ctx context.Context, id string) error {
-	_, err := r.db.NewDelete().Model((*sqlModel)(nil)).Where("id = ?", id).Exec(ctx)
+	query := r.db.NewDelete().Model((*sqlModel)(nil)).Where("id = ?", id)
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	_, err := query.Exec(ctx)
 	return err
 }

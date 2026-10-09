@@ -3,7 +3,7 @@ package executor
 import (
 	"context"
 	"fmt"
-	"peekaping/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 	"strconv"
 	"time"
 

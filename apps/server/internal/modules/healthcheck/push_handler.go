@@ -2,15 +2,15 @@ package healthcheck
 
 import (
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/queue"
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
 	"net/http"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/modules/queue"
-	"peekaping/internal/utils"
 	"strconv"
 	"time"
 
-	"peekaping/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

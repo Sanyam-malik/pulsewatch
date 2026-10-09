@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
-	"peekaping/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -57,7 +57,9 @@ type RepositoryImpl struct {
 func NewMongoRepository(client *mongo.Client, cfg *config.Config) Repository {
 	db := client.Database(cfg.DBName)
 	collection := db.Collection("users")
-	return &RepositoryImpl{client, db, collection}
+	repo := &RepositoryImpl{client, db, collection}
+	repo.ensureIdentityIndexes(context.Background())
+	return repo
 }
 
 func (r *RepositoryImpl) Create(ctx context.Context, user *Model) (*Model, error) {

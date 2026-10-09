@@ -1,7 +1,7 @@
 package healthcheck
 
 import (
-	"peekaping/internal/modules/healthcheck/executor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/healthcheck/executor"
 
 	"go.uber.org/dig"
 )

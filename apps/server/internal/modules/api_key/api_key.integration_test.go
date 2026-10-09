@@ -34,6 +34,7 @@ func setupTestDB(t *testing.T) *bun.DB {
 			expires_at DATETIME,
 			usage_count INTEGER NOT NULL DEFAULT 0,
 			max_usage_count INTEGER,
+			group_id TEXT,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 		)

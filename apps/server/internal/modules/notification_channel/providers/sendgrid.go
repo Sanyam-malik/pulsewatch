@@ -3,8 +3,8 @@ package providers
 import (
 	"context"
 	"fmt"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
 	"strings"
 
 	liquid "github.com/osteele/liquid"
@@ -62,7 +62,7 @@ func (s *SendGridSender) Send(
 	bindings := PrepareTemplateBindings(m, heartbeat, message)
 
 	// Prepare subject with template support
-	finalSubject := "Peekaping Notification"
+	finalSubject := "Pulsewatch Notification"
 	if cfg.Subject != "" {
 		if rendered, err := engine.ParseAndRenderString(cfg.Subject, bindings); err == nil {
 			finalSubject = rendered

@@ -1,10 +1,10 @@
 package status_page
 
 import (
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
 	"net/http"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/utils"
 	"time"
 
 	"github.com/gin-gonic/gin"

@@ -3,7 +3,8 @@ package api_key
 import (
 	"context"
 	"errors"
-	"peekaping/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -23,6 +24,7 @@ type mongoModel struct {
 	MaxUsageCount *int64             `bson:"max_usage_count"`
 	CreatedAt     time.Time          `bson:"createdAt"`
 	UpdatedAt     time.Time          `bson:"updatedAt"`
+	GroupID       primitive.ObjectID `bson:"group_id,omitempty"`
 }
 
 type mongoUpdateModel struct {
@@ -35,6 +37,7 @@ type mongoUpdateModel struct {
 func toDomainModel(mm *mongoModel) *Model {
 	return &Model{
 		ID:            mm.ID.Hex(),
+		GroupID:       objectIDHex(mm.GroupID),
 		Name:          mm.Name,
 		KeyHash:       mm.KeyHash,
 		DisplayKey:    mm.DisplayKey,
@@ -62,6 +65,10 @@ func NewMongoRepository(client *mongo.Client, cfg *config.Config) Repository {
 
 // MARK: Create
 func (r *RepositoryImpl) Create(ctx context.Context, apiKey *CreateModel) (*APIKeyWithToken, error) {
+	groupID, _, err := auth.MongoGroupIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	// Generate API key ID upfront
 	apiKeyID := primitive.NewObjectID()
 
@@ -76,9 +83,10 @@ func (r *RepositoryImpl) Create(ctx context.Context, apiKey *CreateModel) (*APIK
 		MaxUsageCount: apiKey.MaxUsageCount,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
+		GroupID:       groupID,
 	}
 
-	_, err := r.collection.InsertOne(ctx, mm)
+	_, err = r.collection.InsertOne(ctx, mm)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +106,11 @@ func (r *RepositoryImpl) FindByID(ctx context.Context, id string) (*Model, error
 	}
 
 	mm := new(mongoModel)
-	err = r.collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(mm)
+	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
+	err = r.collection.FindOne(ctx, filter).Decode(mm)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil
@@ -111,7 +123,11 @@ func (r *RepositoryImpl) FindByID(ctx context.Context, id string) (*Model, error
 // MARK: FindAll
 func (r *RepositoryImpl) FindAll(ctx context.Context) ([]*Model, error) {
 	opts := options.Find().SetSort(bson.M{"createdAt": -1})
-	cursor, err := r.collection.Find(ctx, bson.M{}, opts)
+	filter := bson.M{}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
+	cursor, err := r.collection.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -152,9 +168,13 @@ func (r *RepositoryImpl) Update(ctx context.Context, id string, update *UpdateMo
 
 	mm := new(mongoModel)
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
 	err = r.collection.FindOneAndUpdate(
 		ctx,
-		bson.M{"_id": objectID},
+		filter,
 		bson.M{"$set": updateDoc},
 		opts,
 	).Decode(mm)
@@ -175,7 +195,11 @@ func (r *RepositoryImpl) Delete(ctx context.Context, id string) error {
 		return err
 	}
 
-	_, err = r.collection.DeleteOne(ctx, bson.M{"_id": objectID})
+	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return err
+	}
+	_, err = r.collection.DeleteOne(ctx, filter)
 	return err
 }
 
@@ -186,9 +210,13 @@ func (r *RepositoryImpl) UpdateLastUsed(ctx context.Context, id string) error {
 		return err
 	}
 
+	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return err
+	}
 	_, err = r.collection.UpdateOne(
 		ctx,
-		bson.M{"_id": objectID},
+		filter,
 		bson.M{
 			"$set": bson.M{"last_used": time.Now()},
 			"$inc": bson.M{"usage_count": 1},
@@ -210,6 +238,29 @@ func (r *RepositoryImpl) UpdateKeyHash(ctx context.Context, id string, keyHash s
 			"updated_at":  time.Now(),
 		},
 	}
-	_, err = r.collection.UpdateOne(ctx, bson.M{"_id": objectID}, update)
+	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return err
+	}
+	_, err = r.collection.UpdateOne(ctx, filter, update)
 	return err
+}
+
+func addGroupScope(ctx context.Context, filter bson.M) error {
+	groupID, scoped, err := auth.MongoGroupIDFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	if scoped {
+		filter["group_id"] = groupID
+	}
+	return nil
+}
+
+func objectIDHex(id primitive.ObjectID) string {
+	if id == primitive.NilObjectID {
+		return ""
+	}
+	return id.Hex()
 }

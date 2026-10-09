@@ -7,14 +7,15 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/certificate"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
+	"github.com/sanyam-malik/pulsewatch/internal/version"
 	"io"
+	"math"
 	"net"
 	"net/http"
 	"net/url"
-	"peekaping/internal/modules/certificate"
-	"peekaping/internal/modules/shared"
-	"peekaping/internal/utils"
-	"peekaping/internal/version"
 	"strconv"
 	"strings"
 	"sync"
@@ -112,6 +113,44 @@ func HTTPConfigStructLevelValidation(sl validator.StructLevel) {
 			sl.ReportError(cfg.TlsCa, "TlsCa", "tlsCa", "required_with_auth_mtls", "")
 		}
 	}
+
+	if len(cfg.Conditions) == 0 && cfg.ConditionOperator != "" {
+		sl.ReportError(cfg.ConditionOperator, "ConditionOperator", "condition_operator", "required_with_conditions", "")
+	}
+	for i, condition := range cfg.Conditions {
+		field := fmt.Sprintf("Conditions[%d]", i)
+		switch condition.Type {
+		case "status":
+			if condition.JsonQuery != "" {
+				sl.ReportError(condition.JsonQuery, field+".JsonQuery", field+".json_query", "excluded_with_status", "")
+			}
+			if condition.Operator == "exists" || condition.Operator == "not_exists" {
+				sl.ReportError(condition.Operator, field+".Operator", field+".operator", "comparison_operator", "")
+			}
+			statusCode, err := strconv.Atoi(condition.ExpectedValue)
+			if err != nil || statusCode < 100 || statusCode > 599 {
+				sl.ReportError(condition.ExpectedValue, field+".ExpectedValue", field+".expected_value", "http_status", "")
+			}
+		case "response_time":
+			if condition.JsonQuery != "" {
+				sl.ReportError(condition.JsonQuery, field+".JsonQuery", field+".json_query", "excluded_with_response_time", "")
+			}
+			if condition.Operator == "exists" || condition.Operator == "not_exists" {
+				sl.ReportError(condition.Operator, field+".Operator", field+".operator", "comparison_operator", "")
+			}
+			responseTime, err := strconv.ParseFloat(condition.ExpectedValue, 64)
+			if err != nil || math.IsNaN(responseTime) || math.IsInf(responseTime, 0) || responseTime < 0 {
+				sl.ReportError(condition.ExpectedValue, field+".ExpectedValue", field+".expected_value", "non_negative_number", "")
+			}
+		case "json":
+			if condition.JsonQuery == "" && condition.Operator != "==" && condition.Operator != "!=" {
+				sl.ReportError(condition.JsonQuery, field+".JsonQuery", field+".json_query", "required_for_operator", "")
+			}
+			if condition.JsonQuery == "" && (condition.Operator == "exists" || condition.Operator == "not_exists") {
+				sl.ReportError(condition.JsonQuery, field+".JsonQuery", field+".json_query", "required", "")
+			}
+		}
+	}
 }
 
 type HTTPConfig struct {
@@ -133,6 +172,11 @@ type HTTPConfig struct {
 	JsonCondition string `json:"json_condition,omitempty" validate:"omitempty,oneof='==' '!=' '>' '<' '>=' '<='"`
 	ExpectedValue string `json:"expected_value,omitempty"`
 
+	// Conditions are evaluated together using ConditionOperator. When present,
+	// they replace the legacy JsonQuery/JsonCondition check.
+	ConditionOperator string          `json:"condition_operator,omitempty" validate:"omitempty,oneof=and or"`
+	Conditions        []HTTPCondition `json:"conditions,omitempty" validate:"omitempty,min=1,max=20,dive"`
+
 	// Authentication fields
 	AuthMethod        string `json:"authMethod" validate:"required,oneof=none basic oauth2-cc ntlm mtls"`
 	BasicAuthUser     string `json:"basic_auth_user,omitempty"`
@@ -147,6 +191,13 @@ type HTTPConfig struct {
 	TlsCert           string `json:"tlsCert,omitempty"`
 	TlsKey            string `json:"tlsKey,omitempty"`
 	TlsCa             string `json:"tlsCa,omitempty"`
+}
+
+type HTTPCondition struct {
+	Type          string `json:"type" validate:"required,oneof=status response_time json"`
+	JsonQuery     string `json:"json_query,omitempty"`
+	Operator      string `json:"operator" validate:"required,oneof='==' '!=' '>' '<' '>=' '<=' exists not_exists"`
+	ExpectedValue string `json:"expected_value,omitempty"`
 }
 
 type HTTPExecutor struct {
@@ -390,6 +441,119 @@ func checkJsonQuery(responseBody, jsonQuery, condition, expectedValue string) (b
 	}
 }
 
+func checkHTTPConditions(
+	responseBody string,
+	statusCode int,
+	responseTime time.Duration,
+	operator string,
+	conditions []HTTPCondition,
+) (bool, []string) {
+	operator = defaultConditionOperator(operator)
+
+	passedAny := false
+	passedAll := true
+	failures := make([]string, 0, len(conditions))
+	for _, condition := range conditions {
+		passed, err := evaluateHTTPCondition(responseBody, statusCode, responseTime, condition)
+		if err == nil && passed {
+			passedAny = true
+			continue
+		}
+		passedAll = false
+		detail := fmt.Sprintf("%s %s %q", condition.Type, condition.Operator, condition.ExpectedValue)
+		if condition.JsonQuery != "" {
+			detail = fmt.Sprintf("JSON %s %s %q", condition.JsonQuery, condition.Operator, condition.ExpectedValue)
+		}
+		if err != nil {
+			detail += ": " + err.Error()
+		}
+		failures = append(failures, detail)
+	}
+
+	if operator == "or" {
+		return passedAny, failures
+	}
+	return passedAll, failures
+}
+
+func defaultConditionOperator(operator string) string {
+	if operator == "" {
+		return "and"
+	}
+	return operator
+}
+
+func evaluateHTTPCondition(
+	responseBody string,
+	statusCode int,
+	responseTime time.Duration,
+	condition HTTPCondition,
+) (bool, error) {
+	switch condition.Type {
+	case "status":
+		return compareConditionValues(strconv.Itoa(statusCode), condition.Operator, condition.ExpectedValue), nil
+	case "response_time":
+		return compareConditionValues(
+			strconv.FormatInt(responseTime.Milliseconds(), 10),
+			condition.Operator,
+			condition.ExpectedValue,
+		), nil
+	case "json":
+		if !json.Valid([]byte(responseBody)) {
+			return false, fmt.Errorf("response body is not valid JSON")
+		}
+		if condition.Operator == "exists" || condition.Operator == "not_exists" {
+			if condition.JsonQuery == "" {
+				return false, fmt.Errorf("JSON query is required for %s", condition.Operator)
+			}
+			exists := gjson.Get(responseBody, condition.JsonQuery).Exists()
+			if condition.Operator == "not_exists" {
+				return !exists, nil
+			}
+			return exists, nil
+		}
+		return checkJsonQuery(responseBody, condition.JsonQuery, condition.Operator, condition.ExpectedValue)
+	default:
+		return false, fmt.Errorf("unsupported condition type %q", condition.Type)
+	}
+}
+
+func compareConditionValues(actual, operator, expected string) bool {
+	actualNumber, actualErr := strconv.ParseFloat(actual, 64)
+	expectedNumber, expectedErr := strconv.ParseFloat(expected, 64)
+	numeric := actualErr == nil && expectedErr == nil &&
+		!math.IsNaN(actualNumber) && !math.IsNaN(expectedNumber) &&
+		!math.IsInf(actualNumber, 0) && !math.IsInf(expectedNumber, 0)
+	comparison := strings.Compare(actual, expected)
+	if numeric {
+		switch {
+		case actualNumber < expectedNumber:
+			comparison = -1
+		case actualNumber > expectedNumber:
+			comparison = 1
+		default:
+			comparison = 0
+		}
+	}
+
+	switch operator {
+	case "==":
+		return comparison == 0
+	case "!=":
+		return comparison != 0
+	case ">":
+		return comparison > 0
+	case "<":
+		return comparison < 0
+	case ">=":
+		return comparison >= 0
+	case "<=":
+		return comparison <= 0
+	default:
+		return false
+	}
+}
+
 func buildProxyTransport(base *http.Transport, proxyModel *Proxy) http.RoundTripper {
 	if proxyModel == nil {
 		return base
@@ -437,7 +601,7 @@ func buildProxyTransport(base *http.Transport, proxyModel *Proxy) http.RoundTrip
 }
 
 func setDefaultHeaders(req *http.Request) {
-	req.Header.Set("User-Agent", "peekaping/"+version.Version)
+	req.Header.Set("User-Agent", "github.com/sanyam-malik/pulsewatch/"+version.Version)
 	req.Header.Set("Accept", "*/*")
 }
 
@@ -680,8 +844,25 @@ func (h *HTTPExecutor) Execute(ctx context.Context, m *Monitor, proxyModel *Prox
 		}
 	}
 
-	// Check JSON query if specified
-	if m.Type == "http-json-query" {
+	// Explicit condition lists take precedence over the legacy single JSON condition.
+	if len(cfg.Conditions) > 0 {
+		passed, failures := checkHTTPConditions(
+			responseBody,
+			resp.StatusCode,
+			endTime.Sub(startTime),
+			cfg.ConditionOperator,
+			cfg.Conditions,
+		)
+		if !passed {
+			return &Result{
+				Status:    shared.MonitorStatusDown,
+				Message:   fmt.Sprintf("HTTP conditions did not pass (%s): %s", strings.ToUpper(defaultConditionOperator(cfg.ConditionOperator)), strings.Join(failures, "; ")),
+				StartTime: startTime,
+				EndTime:   endTime,
+				TLSInfo:   tlsInfo,
+			}
+		}
+	} else if m.Type == "http-json-query" {
 		isValid, err := checkJsonQuery(responseBody, cfg.JsonQuery, cfg.JsonCondition, cfg.ExpectedValue)
 		if err != nil {
 			return &Result{

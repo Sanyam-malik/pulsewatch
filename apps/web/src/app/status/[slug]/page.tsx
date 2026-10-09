@@ -5,7 +5,8 @@ import {
   getStatusPagesSlugBySlugOptions,
   getStatusPagesSlugBySlugMonitorsOptions,
 } from "@/api/@tanstack/react-query.gen";
-import { Card, CardContent } from "@/components/ui/card";
+import { client } from "@/api/client.gen";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -23,6 +24,16 @@ import BarHistory from "@/components/bars";
 import { last } from "@/lib/utils";
 import { ThemeToggle } from "../../../components/theme-toggle";
 import { useLocalizedTranslation } from "@/hooks/useTranslation";
+
+type PublicIncident = {
+  id: string;
+  title: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  updates: Array<{ id: string; status: string; message: string; created_at: string }>;
+};
+type ApiResponse<T> = { data: T };
 
 const PublicStatusPage = ({ incomingSlug }: { incomingSlug?: string }) => {
   const params = useParams<{ slug: string }>();
@@ -76,6 +87,18 @@ const PublicStatusPage = ({ incomingSlug }: { incomingSlug?: string }) => {
 
   const monitors = monitorsData?.data || [];
 
+  const { data: incidentsData, refetch: refetchIncidents } = useQuery({
+    queryKey: ["public-incidents", slug],
+    queryFn: async () => {
+      const response = await client.instance.get<ApiResponse<PublicIncident[]>>(
+        `/status-pages/slug/${encodeURIComponent(slug!)}/incidents`,
+      );
+      return response.data.data;
+    },
+    enabled: !!slug && !!statusPage?.published,
+  });
+  const incidents = incidentsData ?? [];
+
   // Auto-refresh logic
   useEffect(() => {
     if (!slug || !statusPage) return;
@@ -86,6 +109,7 @@ const PublicStatusPage = ({ incomingSlug }: { incomingSlug?: string }) => {
           // Time to refresh
           refetchStatusPage();
           refetchMonitors();
+          refetchIncidents();
           setLastUpdated(new Date());
           return refreshInterval;
         }
@@ -94,7 +118,7 @@ const PublicStatusPage = ({ incomingSlug }: { incomingSlug?: string }) => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [slug, statusPage, refreshInterval, refetchStatusPage, refetchMonitors]);
+  }, [slug, statusPage, refreshInterval, refetchStatusPage, refetchMonitors, refetchIncidents]);
 
   // Format countdown as MM:SS
   const formatCountdown = (seconds: number) => {
@@ -261,6 +285,40 @@ const PublicStatusPage = ({ incomingSlug }: { incomingSlug?: string }) => {
             <span className="text-lg font-semibold">{overallStatus.text}</span>
           </div>
 
+          {incidents.length > 0 && (
+            <section className="mb-8 space-y-4 text-left" aria-label="Incidents">
+              <h2 className="text-xl font-semibold">Incidents</h2>
+              {incidents.map((incident) => (
+                <Card key={incident.id}>
+                  <CardHeader>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <CardTitle className="text-lg">{incident.title}</CardTitle>
+                      <Badge variant={incident.status === "resolved" ? "secondary" : "destructive"}>
+                        {incident.status}
+                      </Badge>
+                    </div>
+                    <CardDescription>
+                      Updated {new Date(incident.updated_at).toLocaleString()}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ol className="space-y-3 border-l pl-4">
+                      {incident.updates.map((update) => (
+                        <li key={update.id}>
+                          <p className="font-medium capitalize">{update.status}</p>
+                          <p className="text-sm">{update.message}</p>
+                          <time className="text-xs text-muted-foreground">
+                            {new Date(update.created_at).toLocaleString()}
+                          </time>
+                        </li>
+                      ))}
+                    </ol>
+                  </CardContent>
+                </Card>
+              ))}
+            </section>
+          )}
+
           {/* Monitors */}
           <div className="space-y-4">
             {monitorsLoading && (
@@ -372,6 +430,7 @@ const PublicStatusPage = ({ incomingSlug }: { incomingSlug?: string }) => {
               onClick={() => {
                 refetchStatusPage();
                 refetchMonitors();
+                refetchIncidents();
                 setLastUpdated(new Date());
                 setCountdown(refreshInterval);
               }}
@@ -387,10 +446,10 @@ const PublicStatusPage = ({ incomingSlug }: { incomingSlug?: string }) => {
           <p className="text-xs text-muted-foreground">
             {t("status.messages.powered_by")}{" "}
             <a
-              href="https://github.com/0xfurai/peekaping"
+              href="https://github.com/Sanyam-malik/pulsewatch"
               className="underline hover:text-foreground"
             >
-              Peekaping
+              Pulsewatch
             </a>
           </p>
         </div>

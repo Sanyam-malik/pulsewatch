@@ -8,13 +8,13 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/maintenance"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/modules/monitor_notification"
-	"peekaping/internal/modules/proxy"
-	"peekaping/internal/modules/queue"
-	"peekaping/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/maintenance"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_notification"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/proxy"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/queue"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 )
 
 // Producer is responsible for scheduling monitor health checks

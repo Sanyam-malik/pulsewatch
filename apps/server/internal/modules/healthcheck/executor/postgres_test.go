@@ -2,7 +2,7 @@ package executor
 
 import (
 	"context"
-	"peekaping/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

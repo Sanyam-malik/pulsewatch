@@ -1,7 +1,7 @@
 package api_key
 
 import (
-	"peekaping/internal/modules/auth"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
 
 	"github.com/gin-gonic/gin"
 )

@@ -2,6 +2,8 @@ package monitor_maintenance
 
 import (
 	"context"
+	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
 	"time"
 
 	"github.com/google/uuid"
@@ -47,6 +49,21 @@ func NewSQLRepository(db *bun.DB) Repository {
 }
 
 func (r *SQLRepositoryImpl) Create(ctx context.Context, model *Model) (*Model, error) {
+	if groupID, scoped := auth.GroupIDFromContext(ctx); scoped {
+		monitorExists, err := r.db.NewSelect().Table("monitors").Column("id").
+			Where("id = ? AND group_id = ?", model.MonitorID, groupID).Exists(ctx)
+		if err != nil {
+			return nil, err
+		}
+		maintenanceExists, err := r.db.NewSelect().Table("maintenances").Column("id").
+			Where("id = ? AND group_id = ?", model.MaintenanceID, groupID).Exists(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if !monitorExists || !maintenanceExists {
+			return nil, fmt.Errorf("monitor and maintenance must belong to the selected group")
+		}
+	}
 	sm := toSQLModel(model)
 	sm.ID = uuid.New().String()
 	sm.CreatedAt = time.Now()

@@ -81,7 +81,6 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: 0xfurai/peekaping
+          slug: Sanyam-malik/pulsewatch
           file: apps/server/coverage.txt
-
 

@@ -5,9 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
 	"net/http"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
 	"time"
 
 	liquid "github.com/osteele/liquid"
@@ -76,12 +76,12 @@ func (s *LineSender) Send(
 	} else if heartbeat != nil {
 		// Default message format when template is not used
 		if heartbeat.Status == 0 { // DOWN
-			messageText = fmt.Sprintf("Peekaping Alert: [🔴 Down]\nName: %s\n%s\nTime: %s",
+			messageText = fmt.Sprintf("Pulsewatch Alert: [🔴 Down]\nName: %s\n%s\nTime: %s",
 				monitor.Name,
 				message,
 				heartbeat.Time.Format(time.RFC3339))
 		} else if heartbeat.Status == 1 { // UP
-			messageText = fmt.Sprintf("Peekaping Alert: [✅ Up]\nName: %s\n%s\nTime: %s",
+			messageText = fmt.Sprintf("Pulsewatch Alert: [✅ Up]\nName: %s\n%s\nTime: %s",
 				monitor.Name,
 				message,
 				heartbeat.Time.Format(time.RFC3339))

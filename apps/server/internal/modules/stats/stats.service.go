@@ -3,9 +3,9 @@ package stats
 import (
 	"context"
 	"fmt"
-	"peekaping/internal/infra"
-	"peekaping/internal/modules/events"
-	"peekaping/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/infra"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/events"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 	"time"
 
 	"go.uber.org/zap"

@@ -3,9 +3,9 @@ package executor
 import (
 	"context"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 	"net"
 	"os/exec"
-	"peekaping/internal/modules/shared"
 	"runtime"
 	"strconv"
 	"strings"
@@ -125,7 +125,7 @@ func (p *PingExecutor) tryNativePing(ctx context.Context, host string, packetSiz
 		dataSize = 0
 	}
 	data := make([]byte, dataSize)
-	copy(data, []byte("Peekaping"))
+	copy(data, []byte("Pulsewatch"))
 
 	p.logger.Debugf("Native ping: host=%s, dataSize=%d, totalPacketSize=%d", host, dataSize, dataSize+8)
 

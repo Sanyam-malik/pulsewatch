@@ -2,29 +2,29 @@ package main
 
 import (
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/infra"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/certificate"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/events"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/healthcheck"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/maintenance"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_maintenance"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_notification"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_tag"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_tls_info"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/notification_sent_history"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/producer"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/proxy"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/setting"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/stats"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/tag"
+	"github.com/sanyam-malik/pulsewatch/internal/version"
 	"log"
 	"os"
 	"os/signal"
-	"peekaping/internal"
-	"peekaping/internal/config"
-	"peekaping/internal/infra"
-	"peekaping/internal/modules/certificate"
-	"peekaping/internal/modules/events"
-	"peekaping/internal/modules/healthcheck"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/maintenance"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/modules/monitor_maintenance"
-	"peekaping/internal/modules/monitor_notification"
-	"peekaping/internal/modules/monitor_tag"
-	"peekaping/internal/modules/monitor_tls_info"
-	"peekaping/internal/modules/notification_sent_history"
-	"peekaping/internal/modules/producer"
-	"peekaping/internal/modules/proxy"
-	"peekaping/internal/modules/setting"
-	"peekaping/internal/modules/stats"
-	"peekaping/internal/modules/tag"
-	"peekaping/internal/version"
 	"syscall"
 
 	"go.uber.org/dig"
@@ -32,7 +32,7 @@ import (
 )
 
 func main() {
-	log.Printf("Starting Peekaping Producer v%s", version.Version)
+	log.Printf("Starting Pulsewatch Producer v%s", version.Version)
 
 	cfg, err := LoadAndValidate("../..")
 	if err != nil {

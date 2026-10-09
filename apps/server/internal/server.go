@@ -1,24 +1,26 @@
 package internal
 
 import (
+	_ "github.com/sanyam-malik/pulsewatch/docs"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/api_key"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/badge"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/healthcheck"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/incident"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/maintenance"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_group"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/notification_channel"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/proxy"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/queue"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/setting"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/status_page"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/tag"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/websocket"
+	"github.com/sanyam-malik/pulsewatch/internal/version"
 	"net/http"
-	_ "peekaping/docs"
-	"peekaping/internal/config"
-	"peekaping/internal/modules/api_key"
-	"peekaping/internal/modules/auth"
-	"peekaping/internal/modules/badge"
-	"peekaping/internal/modules/healthcheck"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/maintenance"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/modules/notification_channel"
-	"peekaping/internal/modules/proxy"
-	"peekaping/internal/modules/queue"
-	"peekaping/internal/modules/setting"
-	"peekaping/internal/modules/status_page"
-	"peekaping/internal/modules/tag"
-	"peekaping/internal/modules/websocket"
-	"peekaping/internal/version"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -58,6 +60,8 @@ func ProvideServer(
 	cfg *config.Config,
 	monitorRoute *monitor.MonitorRoute,
 	monitorController *monitor.MonitorController,
+	monitorGroupRoute *monitor_group.Route,
+	incidentRoute *incident.Route,
 	authRoute *auth.Route,
 	authController *auth.Controller,
 	wsServer *websocket.Server,
@@ -99,7 +103,7 @@ func ProvideServer(
 	server.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-		AllowHeaders:     []string{"Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"},
+		AllowHeaders:     []string{"Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization", "X-Group-ID"},
 		ExposeHeaders:    []string{"Authorization"},
 		AllowCredentials: true,
 	}))
@@ -114,6 +118,8 @@ func ProvideServer(
 	// Connect routes
 	monitorRoute.ConnectRoute(router, monitorController)
 	authRoute.ConnectRoute(router, authController)
+	monitorGroupRoute.ConnectRoute(router)
+	incidentRoute.ConnectRoute(router)
 	notificationChannelRoute.ConnectRoute(router, notificationChannelController)
 	proxyRoute.ConnectRoute(router, proxyController)
 	settingRoute.ConnectRoute(router, settingController)

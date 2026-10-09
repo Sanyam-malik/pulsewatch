@@ -1,10 +1,10 @@
 package certificate
 
 import (
-	"peekaping/internal/modules/events"
-	"peekaping/internal/modules/monitor_tls_info"
-	"peekaping/internal/modules/notification_sent_history"
-	"peekaping/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/events"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_tls_info"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/notification_sent_history"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 
 	"go.uber.org/dig"
 	"go.uber.org/zap"

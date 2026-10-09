@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/version"
 	"io"
 	"net/http"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/version"
 	"strings"
 	"time"
 
@@ -135,7 +135,7 @@ func (w *WhatsAppSender) sendToPhoneNumber(
 
 	// Set headers
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "Peekaping-WhatsApp/"+version.Version)
+	req.Header.Set("User-Agent", "Pulsewatch-WhatsApp/"+version.Version)
 	if cfg.APIKey != "" {
 		req.Header.Set("x-api-key", cfg.APIKey)
 	}

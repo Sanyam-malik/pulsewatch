@@ -12,35 +12,31 @@ interface Props {
 }
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const baseUrl = import.meta.env.BASE_URL.endsWith("/")
+  ? import.meta.env.BASE_URL
+  : `${import.meta.env.BASE_URL}/`;
 
 const { title, description, image } = Astro.props;
 ---
 
-<!-- Google Tag Manager -->
-<script is:inline>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-5HHD6MTB');</script>
-<!-- End Google Tag Manager -->
-
 <!-- Global Metadata -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" type="image/svg+xml" href="/fav/favicon.ico" />
-<link rel="sitemap" href="/fav/sitemap-index.xml" />
+<link rel="icon" type="image/x-icon" href={`${baseUrl}fav/favicon.ico`} />
+<link rel="manifest" href={`${baseUrl}fav/site.webmanifest`} />
+<link rel="sitemap" href={`${baseUrl}sitemap-index.xml`} />
 <link
 	rel="alternate"
 	type="application/rss+xml"
 	title={SITE_TITLE}
-	href={new URL('rss.xml', Astro.site)}
+	href={new URL(`${baseUrl}rss.xml`, Astro.site)}
 />
 <meta name="generator" content={Astro.generator} />
 
 <!-- Font preloads -->
-<link rel="preload" href="/fonts/geist-regular.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="preload" href="/fonts/geist-bold.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="preload" href="/fonts/geist-semibold.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href={`${baseUrl}fonts/geist-regular.woff2`} as="font" type="font/woff2" crossorigin />
+<link rel="preload" href={`${baseUrl}fonts/geist-bold.woff2`} as="font" type="font/woff2" crossorigin />
+<link rel="preload" href={`${baseUrl}fonts/geist-semibold.woff2`} as="font" type="font/woff2" crossorigin />
 
 <!-- Canonical URL -->
 <link rel="canonical" href={canonicalURL} />

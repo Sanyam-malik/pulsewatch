@@ -3,11 +3,11 @@ package providers
 import (
 	"context"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/version"
 	"io"
 	"net/http"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/version"
 	"strings"
 	"time"
 
@@ -82,7 +82,7 @@ func (e *NTFYSender) Send(
 	}
 
 	// Prepare title
-	finalTitle := "Peekaping Notification"
+	finalTitle := "Pulsewatch Notification"
 	if cfg.Title != "" {
 		if rendered, err := engine.ParseAndRenderString(cfg.Title, bindings); err == nil {
 			finalTitle = rendered
@@ -122,7 +122,7 @@ func (e *NTFYSender) Send(
 
 	// Set headers
 	req.Header.Set("Content-Type", "text/plain")
-	req.Header.Set("User-Agent", "Peekaping-NTFY/"+version.Version)
+	req.Header.Set("User-Agent", "Pulsewatch-NTFY/"+version.Version)
 
 	// Set title header if provided
 	if finalTitle != "" {

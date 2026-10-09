@@ -3,8 +3,8 @@ package auth
 import (
 	"errors"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
 	"net/http"
-	"peekaping/internal/utils"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -297,4 +297,131 @@ func (c *Controller) DisableTwoFA(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, utils.NewSuccessResponse[any]("2FA disabled successfully", nil))
+}
+
+func (c *Controller) ListGroups(ctx *gin.Context) {
+	userID, ok := ctx.Get("userId")
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, utils.NewFailResponse("Unauthorized"))
+		return
+	}
+	groups, err := c.service.ListGroups(ctx, userID.(string))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, utils.NewFailResponse("Failed to load groups"))
+		return
+	}
+	ctx.JSON(http.StatusOK, utils.NewSuccessResponse("Groups loaded", groups))
+}
+
+func (c *Controller) CreateGroup(ctx *gin.Context) {
+	userID, ok := ctx.Get("userId")
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, utils.NewFailResponse("Unauthorized"))
+		return
+	}
+	var dto CreateGroupDto
+	if err := ctx.ShouldBindJSON(&dto); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.NewFailResponse(err.Error()))
+		return
+	}
+	if err := c.validateWithDetails(dto); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.NewFailResponse(err.Error()))
+		return
+	}
+	group, err := c.service.CreateGroup(ctx, userID.(string), dto)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, utils.NewFailResponse("Failed to create group"))
+		return
+	}
+	ctx.JSON(http.StatusCreated, utils.NewSuccessResponse("Group created", group))
+}
+
+func (c *Controller) ListMembers(ctx *gin.Context) {
+	userID, ok := ctx.Get("userId")
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, utils.NewFailResponse("Unauthorized"))
+		return
+	}
+	members, err := c.service.ListMembers(ctx, userID.(string), ctx.Param("groupId"))
+	if err != nil {
+		c.writeIdentityError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, utils.NewSuccessResponse("Group members loaded", members))
+}
+
+func (c *Controller) AddMember(ctx *gin.Context) {
+	userID, ok := ctx.Get("userId")
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, utils.NewFailResponse("Unauthorized"))
+		return
+	}
+	var dto AddMemberDto
+	if err := ctx.ShouldBindJSON(&dto); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.NewFailResponse(err.Error()))
+		return
+	}
+	if err := c.validateWithDetails(dto); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.NewFailResponse(err.Error()))
+		return
+	}
+	member, err := c.service.AddMember(ctx, userID.(string), ctx.Param("groupId"), dto)
+	if err != nil {
+		c.writeIdentityError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusCreated, utils.NewSuccessResponse("Member added", member))
+}
+
+func (c *Controller) UpdateMemberRole(ctx *gin.Context) {
+	userID, ok := ctx.Get("userId")
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, utils.NewFailResponse("Unauthorized"))
+		return
+	}
+	var dto UpdateMemberRoleDto
+	if err := ctx.ShouldBindJSON(&dto); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.NewFailResponse(err.Error()))
+		return
+	}
+	if err := c.validateWithDetails(dto); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.NewFailResponse(err.Error()))
+		return
+	}
+	err := c.service.UpdateMemberRole(ctx, userID.(string), ctx.Param("groupId"), ctx.Param("userId"), dto)
+	if err != nil {
+		c.writeIdentityError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, utils.NewSuccessResponse[any]("Member access updated", nil))
+}
+
+func (c *Controller) RemoveMember(ctx *gin.Context) {
+	userID, ok := ctx.Get("userId")
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, utils.NewFailResponse("Unauthorized"))
+		return
+	}
+	err := c.service.RemoveMember(ctx, userID.(string), ctx.Param("groupId"), ctx.Param("userId"))
+	if err != nil {
+		c.writeIdentityError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, utils.NewSuccessResponse[any]("Member removed", nil))
+}
+
+func (c *Controller) writeIdentityError(ctx *gin.Context, err error) {
+	switch {
+	case strings.Contains(err.Error(), "access required"), strings.Contains(err.Error(), "only a group owner"):
+		ctx.JSON(http.StatusForbidden, utils.NewFailResponse(err.Error()))
+	case strings.Contains(err.Error(), "membership not found"), strings.Contains(err.Error(), "no documents"), strings.Contains(err.Error(), "no rows"):
+		ctx.JSON(http.StatusNotFound, utils.NewFailResponse(err.Error()))
+	case strings.Contains(err.Error(), "already exists"), strings.Contains(err.Error(), "last group owner"):
+		ctx.JSON(http.StatusConflict, utils.NewFailResponse(err.Error()))
+	case strings.Contains(err.Error(), "password"), strings.Contains(err.Error(), "role cannot be assigned"), strings.Contains(err.Error(), "cannot change their own role"), strings.Contains(err.Error(), "cannot remove their own"):
+		ctx.JSON(http.StatusBadRequest, utils.NewFailResponse(err.Error()))
+	default:
+		c.logger.Errorw("Group access operation failed", "error", err)
+		ctx.JSON(http.StatusInternalServerError, utils.NewFailResponse("Group access operation failed"))
+	}
 }

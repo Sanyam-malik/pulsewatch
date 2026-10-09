@@ -15,9 +15,9 @@ type CreateAPIKeyDto struct {
 // UpdateAPIKeyDto represents the request to update an API key
 // swagger:model
 type UpdateAPIKeyDto struct {
-	Name          *string     `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
-	ExpiresAt     *time.Time  `json:"expires_at,omitempty" validate:"omitempty"`
-	MaxUsageCount *int64      `json:"max_usage_count,omitempty" validate:"omitempty,min=1"`
+	Name          *string    `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
+	ExpiresAt     *time.Time `json:"expires_at,omitempty" validate:"omitempty"`
+	MaxUsageCount *int64     `json:"max_usage_count,omitempty" validate:"omitempty,min=1"`
 }
 
 // APIKeyResponse represents the response for API key operations

@@ -3,7 +3,7 @@ package tag
 import (
 	"context"
 	"errors"
-	"peekaping/internal/modules/monitor_tag"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_tag"
 
 	"go.uber.org/zap"
 )

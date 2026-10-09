@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # Worker
 
-The Worker is the execution engine of Peekaping, responsible for performing actual health checks on monitored services and applications. It consumes tasks from the Redis queue, executes the appropriate health check, and enqueues results for the ingester to process.
+The Worker is the execution engine of Pulsewatch, responsible for performing health checks on monitored services and applications. It consumes tasks from the Redis queue, executes the appropriate check, and enqueues results for the ingester to process.
 
 ## Role & Responsibilities
 
@@ -32,6 +32,10 @@ The worker uses a registry of executors for different monitor types:
 | Monitor Type | Executor | Description |
 |--------------|----------|-------------|
 | `http` / `https` | HTTP Executor | HTTP/HTTPS requests with various methods |
+| `http-keyword` / `http-json-query` | HTTP Executor | HTTP keyword matching, legacy GJSON checks, and multi-rule status/response-time/JSON assertions |
+| `steam` | Steam Executor | Steam server status through the Source A2S_INFO UDP query |
+| `gamedig` | GameDig Executor | A2S-compatible game server status, optional name/map/player assertions |
+| `playwright` | Browser Executor | Chromium page load and CSS selector/text checks over a remote DevTools WebSocket |
 | `tcp` | TCP Executor | TCP port connectivity checks |
 | `ping` / `icmp` | Ping Executor | ICMP ping checks |
 | `dns` | DNS Executor | DNS query resolution |
@@ -73,7 +77,7 @@ Workers can run multiple tasks concurrently based on the `QUEUE_CONCURRENCY` set
 | `MODE` | string | Yes | `dev` | Runtime mode: `dev`, `prod`, or `test` |
 | `LOG_LEVEL` | string | No | `info` | Logging level: `debug`, `info`, `warn`, `error` |
 | `TZ` | string | Yes | `UTC` | Timezone for the worker |
-| `SERVICE_NAME` | string | Yes | `peekaping:worker` | Service identifier for logging |
+| `SERVICE_NAME` | string | Yes | `pulsewatch:worker` | Service identifier for logging |
 
 ## Task Processing Flow
 
@@ -115,4 +119,3 @@ Asynq server configuration:
 - [Producer](./producer.md) - Enqueues health check tasks for workers
 - [Ingester](./ingester.md) - Processes health check results from workers
 - [API Server](./api-server.md) - Manages monitor configurations
-

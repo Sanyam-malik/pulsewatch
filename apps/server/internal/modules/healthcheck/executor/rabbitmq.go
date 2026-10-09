@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 	"io"
 	"net/http"
 	"net/url"
-	"peekaping/internal/modules/shared"
 	"strings"
 	"time"
 

@@ -5,12 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/version"
 	"io"
 	"mime/multipart"
 	"net/http"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/version"
 
 	liquid "github.com/osteele/liquid"
 	"go.uber.org/zap"
@@ -158,7 +158,7 @@ func (w *WebhookSender) Send(
 	}
 
 	// Set default user agent
-	req.Header.Set("User-Agent", "Peekaping-Webhook/"+version.Version)
+	req.Header.Set("User-Agent", "Pulsewatch-Webhook/"+version.Version)
 
 	w.logger.Debugf("Sending webhook POST request to: %s", cfg.WebhookURL)
 

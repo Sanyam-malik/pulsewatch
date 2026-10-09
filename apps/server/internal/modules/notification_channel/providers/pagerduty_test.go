@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 
 	"go.uber.org/zap"
 )
@@ -125,7 +125,7 @@ func TestPagerDutySender_getTitle(t *testing.T) {
 	// Test DOWN status
 	downHeartbeat := &heartbeat.Model{Status: shared.MonitorStatusDown}
 	title := sender.getTitle(downHeartbeat)
-	expected := "Peekaping Monitor 🔴 Down"
+	expected := "Pulsewatch Monitor 🔴 Down"
 	if title != expected {
 		t.Errorf("Expected title '%s', got '%s'", expected, title)
 	}
@@ -133,7 +133,7 @@ func TestPagerDutySender_getTitle(t *testing.T) {
 	// Test UP status
 	upHeartbeat := &heartbeat.Model{Status: shared.MonitorStatusUp}
 	title = sender.getTitle(upHeartbeat)
-	expected = "Peekaping Monitor ✅ Up"
+	expected = "Pulsewatch Monitor ✅ Up"
 	if title != expected {
 		t.Errorf("Expected title '%s', got '%s'", expected, title)
 	}
@@ -141,7 +141,7 @@ func TestPagerDutySender_getTitle(t *testing.T) {
 	// Test PENDING status
 	pendingHeartbeat := &heartbeat.Model{Status: shared.MonitorStatusPending}
 	title = sender.getTitle(pendingHeartbeat)
-	expected = "Peekaping Monitor ⏳ Pending"
+	expected = "Pulsewatch Monitor ⏳ Pending"
 	if title != expected {
 		t.Errorf("Expected title '%s', got '%s'", expected, title)
 	}
@@ -149,14 +149,14 @@ func TestPagerDutySender_getTitle(t *testing.T) {
 	// Test MAINTENANCE status
 	maintenanceHeartbeat := &heartbeat.Model{Status: shared.MonitorStatusMaintenance}
 	title = sender.getTitle(maintenanceHeartbeat)
-	expected = "Peekaping Monitor 🔧 Maintenance"
+	expected = "Pulsewatch Monitor 🔧 Maintenance"
 	if title != expected {
 		t.Errorf("Expected title '%s', got '%s'", expected, title)
 	}
 
 	// Test nil heartbeat
 	title = sender.getTitle(nil)
-	expected = "Peekaping Alert"
+	expected = "Pulsewatch Alert"
 	if title != expected {
 		t.Errorf("Expected title '%s', got '%s'", expected, title)
 	}
@@ -205,13 +205,13 @@ func TestPagerDutyPayload_Structure(t *testing.T) {
 	// Build expected payload structure
 	expectedPayload := map[string]any{
 		"payload": map[string]any{
-			"summary":  "[Peekaping Monitor 🔴 Down] [Test Monitor] Connection timeout",
+			"summary":  "[Pulsewatch Monitor 🔴 Down] [Test Monitor] Connection timeout",
 			"severity": "warning",
 			"source":   monitor.Name, // Fallback to monitor name
 		},
 		"routing_key":  cfg.IntegrationKey,
 		"event_action": eventAction,
-		"dedup_key":    "Peekaping/test-monitor-123",
+		"dedup_key":    "Pulsewatch/test-monitor-123",
 	}
 
 	// Marshal expected payload

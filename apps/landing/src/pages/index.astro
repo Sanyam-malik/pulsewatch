@@ -10,6 +10,9 @@ import Monitors from "../components/Monitors.astro";
 import TechStack from "../components/TechStack.astro";
 import Alerts from "../components/Alerts.astro";
 import faqItems from "../data/faq";
+const baseUrl = import.meta.env.BASE_URL.endsWith("/")
+  ? import.meta.env.BASE_URL
+  : `${import.meta.env.BASE_URL}/`;
 ---
 
 <!doctype html>
@@ -72,17 +75,17 @@ import faqItems from "../data/faq";
             class="bg-white text-[#353535] px-4 py-2 rounded-full hover:bg-white/80 font-semibold w-full sm:w-auto text-center"
             target="_blank"
           >
-            Try the Demo
+            Try the upstream demo
           </a>
           <a
-            href="https://github.com/0xfurai/peekaping?tab=readme-ov-file#quick-start-docker--sqlite"
+            href="https://github.com/Sanyam-malik/pulsewatch#quick-start-docker--sqlite"
             class="bg-black text-white px-4 py-2 rounded-full hover:bg-gray-800 font-semibold w-full sm:w-auto text-center"
             target="_blank"
           >
             Quickstart
           </a>
           <a
-            href="https://github.com/0xfurai/peekaping"
+            href="https://github.com/Sanyam-malik/pulsewatch"
             class="bg-white text-[#353535] px-4 py-2 rounded-full hover:bg-white/80 font-semibold w-full sm:w-auto text-center"
             target="_blank"
             rel="noopener noreferrer"
@@ -97,8 +100,8 @@ import faqItems from "../data/faq";
         <!-- Mobile image -->
         <div class="mt-8 md:hidden">
           <img
-            src="/demo.webp"
-            alt="Peekaping"
+            src={`${baseUrl}demo.webp`}
+            alt="Pulsewatch dashboard inherited from Peekaping"
             class="w-full max-w-[800px] mx-auto rounded-xl"
           />
         </div>
@@ -107,12 +110,12 @@ import faqItems from "../data/faq";
         <div class="hidden md:flex justify-center">
           <div class="relative">
             <img
-              src="/demo.webp"
-              alt="Peekaping"
+              src={`${baseUrl}demo.webp`}
+              alt="Pulsewatch dashboard inherited from Peekaping"
               class="w-full max-w-[1056px] mx-auto"
             />
             <img
-              src="/meerkat.webp"
+              src={`${baseUrl}meerkat.webp`}
               alt="Meerkat mascot"
               class="absolute -bottom-[100px] -right-[180px] w-[280px] lg:w-[400px] z-10"
             />
@@ -188,7 +191,7 @@ import faqItems from "../data/faq";
         if (!el) return;
         try {
           const res = await fetch(
-            "https://green-night-b63d.yojji.workers.dev/?owner=0xfurai&repo=peekaping",
+            "https://green-night-b63d.yojji.workers.dev/?owner=Sanyam-malik&repo=pulsewatch",
             {
               headers: { accept: "application/json" },
               cache: "no-store",

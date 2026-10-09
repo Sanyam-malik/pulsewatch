@@ -1,4 +1,4 @@
-module peekaping
+module github.com/sanyam-malik/pulsewatch
 
 go 1.24.1
 

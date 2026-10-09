@@ -1,8 +1,9 @@
 package api_key
 
 import (
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
 	"net/http"
-	"peekaping/internal/utils"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -24,13 +25,13 @@ func NewMiddlewareProvider(service Service) *MiddlewareProvider {
 // This should be used as the final middleware in a chain for API key-only endpoints
 func (p *MiddlewareProvider) Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-	// Get the X-API-Key header
-	authHeader := c.GetHeader("X-API-Key")
-	if authHeader == "" {
-		c.JSON(http.StatusUnauthorized, utils.NewFailResponse("X-API-Key header is required"))
-		c.Abort()
-		return
-	}
+		// Get the X-API-Key header
+		authHeader := c.GetHeader("X-API-Key")
+		if authHeader == "" {
+			c.JSON(http.StatusUnauthorized, utils.NewFailResponse("X-API-Key header is required"))
+			c.Abort()
+			return
+		}
 
 		// Only accept API keys
 		if !strings.HasPrefix(authHeader, ApiKeyPrefix) {
@@ -50,6 +51,9 @@ func (p *MiddlewareProvider) Auth() gin.HandlerFunc {
 		// Set API key information in the context
 		c.Set("apiKeyId", apiKey.ID)
 		c.Set("authType", "api_key")
+		c.Set("groupId", apiKey.GroupID)
+		c.Set("role", auth.RoleMember)
+		c.Request = c.Request.WithContext(auth.WithIdentity(c.Request.Context(), apiKey.GroupID, auth.RoleMember))
 
 		c.Next()
 	}

@@ -3,11 +3,11 @@ package badge
 import (
 	"context"
 	"fmt"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/modules/monitor_status_page"
-	"peekaping/internal/modules/monitor_tls_info"
-	"peekaping/internal/modules/stats"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_status_page"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_tls_info"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/stats"
 	"strconv"
 	"time"
 

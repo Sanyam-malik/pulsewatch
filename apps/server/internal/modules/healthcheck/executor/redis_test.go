@@ -2,8 +2,8 @@ package executor
 
 import (
 	"context"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 	"net/url"
-	"peekaping/internal/modules/shared"
 	"testing"
 
 	"github.com/redis/go-redis/v9"

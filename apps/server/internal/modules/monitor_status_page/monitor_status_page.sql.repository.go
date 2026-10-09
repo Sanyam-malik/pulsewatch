@@ -2,6 +2,8 @@ package monitor_status_page
 
 import (
 	"context"
+	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
 	"time"
 
 	"github.com/google/uuid"
@@ -37,6 +39,21 @@ func NewSQLRepository(db *bun.DB) Repository {
 }
 
 func (r *SQLRepositoryImpl) Create(ctx context.Context, entity *CreateUpdateDto) (*Model, error) {
+	if groupID, scoped := auth.GroupIDFromContext(ctx); scoped {
+		monitorExists, err := r.db.NewSelect().Table("monitors").Column("id").
+			Where("id = ? AND group_id = ?", entity.MonitorID, groupID).Exists(ctx)
+		if err != nil {
+			return nil, err
+		}
+		statusPageExists, err := r.db.NewSelect().Table("status_pages").Column("id").
+			Where("id = ? AND group_id = ?", entity.StatusPageID, groupID).Exists(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if !monitorExists || !statusPageExists {
+			return nil, fmt.Errorf("monitor and status page must belong to the selected group")
+		}
+	}
 	sm := &sqlModel{
 		ID:           uuid.New().String(),
 		MonitorID:    entity.MonitorID,

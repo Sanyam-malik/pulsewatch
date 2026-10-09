@@ -2,9 +2,9 @@ package monitor
 
 import (
 	"context"
-	"peekaping/internal/infra"
-	"peekaping/internal/modules/events"
-	"peekaping/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/infra"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/events"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
 
 	"go.uber.org/dig"
 	"go.uber.org/zap"

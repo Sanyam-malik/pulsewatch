@@ -1,6 +1,6 @@
 # Kafka Producer Monitor Implementation Summary
 
-This document summarizes the implementation of the kafka-producer monitor type for the Peekaping monitoring application.
+This document summarizes the Kafka producer monitor type inherited by the Pulsewatch fork from Peekaping.
 
 ## Overview
 

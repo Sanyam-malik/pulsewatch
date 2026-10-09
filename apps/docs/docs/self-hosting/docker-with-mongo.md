@@ -4,9 +4,11 @@ sidebar_position: 1
 
 # Docker + MongoDB
 
+The published `0xfurai/peekaping-*` images retain their upstream coordinates for compatibility and are maintained upstream; they may not include Pulsewatch features. Build this repository's images to run the fork.
+
 ## Monolithic mode
 
-The simplest mode of operation is the monolithic deployment mode. This mode runs all of Peekaping microservice components (db + api + web + gateway) inside a single process as a single Docker image.
+The simplest mode of operation is the monolithic deployment mode. This mode runs all of Pulsewatch microservice components (db + api + web + gateway) inside a single process as a single Docker image.
 
 ```bash
 docker run -d --restart=always \
@@ -15,7 +17,7 @@ docker run -d --restart=always \
   -e DB_USER=peekaping \
   -e DB_PASS=secure_test_password_123 \
   -v $(pwd)/.data/mongodb:/data/db \
-  --name peekaping \
+  --name pulsewatch \
   0xfurai/peekaping-bundle-mongo:latest
 ```
 To add custom caddy file add
@@ -33,10 +35,10 @@ If you need more granular control on system components read [Microservice mode s
 
 ### 1. Create Project Structure
 
-Create a new directory for your Peekaping installation and set up the following structure:
+Create a new directory for your Pulsewatch installation and set up the following structure:
 
 ```
-peekaping/
+pulsewatch/
 ├── .env
 ├── docker-compose.yml
 └── nginx.conf
@@ -252,11 +254,11 @@ http {
 
 
 
-### 3. Start Peekaping
+### 3. Start Pulsewatch
 
 ```bash
 # Navigate to your project directory
-cd peekaping
+cd pulsewatch
 
 # Start all services
 docker compose up -d
@@ -268,7 +270,7 @@ docker compose ps
 docker compose logs -f
 ```
 
-### 4. Access Peekaping
+### 4. Access Pulsewatch
 
 Once all containers are running:
 
@@ -278,9 +280,9 @@ Once all containers are running:
 
 ## Docker Images
 
-Peekaping provides official Docker images:
+Pulsewatch provides official Docker images:
 
-- **Server**: [`0xfurai/peekaping-server`](https://hub.docker.com/r/0xfurai/peekaping-server)
+- **Server**: [`0xfurai/pulsewatch-server`](https://hub.docker.com/r/0xfurai/pulsewatch-server)
 - **Web**: [`0xfurai/peekaping-web`](https://hub.docker.com/r/0xfurai/peekaping-web)
 
 ### Image Tags
@@ -290,7 +292,7 @@ Peekaping provides official Docker images:
 
 ## Persistent Data
 
-Peekaping stores data in MongoDB. The docker-compose setup uses a local folder mount `./.data/mongodb:/data/db` to persist your monitoring data.
+Pulsewatch stores data in MongoDB. The docker-compose setup uses a local folder mount `./.data/mongodb:/data/db` to persist your monitoring data.
 
 ### Storage Options
 
@@ -315,7 +317,7 @@ You have two options for persistent storage:
    ```
 
 
-### Updating Peekaping
+### Updating Pulsewatch
 
 ```bash
 # Pull latest images

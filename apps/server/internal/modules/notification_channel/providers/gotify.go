@@ -5,10 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/version"
 	"net/http"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/version"
 	"strings"
 	"time"
 
@@ -75,7 +75,7 @@ func (g *GotifySender) Send(
 	engine := liquid.NewEngine()
 
 	// Set default title if not provided
-	title := "Peekaping"
+	title := "Pulsewatch"
 	if cfg.Title != "" {
 		// Use liquid templating for title
 		if rendered, err := engine.ParseAndRenderString(cfg.Title, bindings); err == nil {
@@ -128,7 +128,7 @@ func (g *GotifySender) Send(
 
 	// Set headers
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "Peekaping-Gotify/"+version.Version)
+	req.Header.Set("User-Agent", "Pulsewatch-Gotify/"+version.Version)
 
 	// Send request
 	g.logger.Infof("Sending Gotify notification to %s", serverURL)

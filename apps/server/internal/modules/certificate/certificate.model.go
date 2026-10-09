@@ -6,7 +6,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"fmt"
-	"peekaping/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 	"strings"
 	"time"
 )

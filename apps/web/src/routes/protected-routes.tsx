@@ -20,6 +20,9 @@ import EditStatusPage from "@/app/status-pages/edit/page";
 import TagsPage from "@/app/tags/page";
 import NewTag from "@/app/tags/new/page";
 import EditTag from "@/app/tags/edit/page";
+import GroupsPage from "@/app/groups/page";
+import MonitorGroupsPage from "@/app/monitor-groups/page";
+import IncidentsPage from "@/app/incidents/page";
 
 export const protectedRoutes = [
   // Monitor routes
@@ -51,6 +54,9 @@ export const protectedRoutes = [
   // Settings and security
   <Route path="/settings" element={<SettingsPage />} />,
   <Route path="/security" element={<SecurityPage />} />,
+  <Route path="/groups" element={<GroupsPage />} />,
+  <Route path="/monitor-groups" element={<MonitorGroupsPage />} />,
+  <Route path="/incidents" element={<IncidentsPage />} />,
 
   // Tag routes
   <Route path="/tags" element={<TagsPage />} />,

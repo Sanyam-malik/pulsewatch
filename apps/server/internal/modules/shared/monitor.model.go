@@ -5,10 +5,11 @@ import (
 )
 
 type Monitor struct {
-	ID string `json:"id"`
+	ID      string `json:"id"`
+	GroupID string `json:"-"`
 
-	// connection type: http, tcp, ping, etc
-	Type string `json:"type" validate:"required" example:"http"`
+	// Monitor type: http, http-keyword, http-json-query, steam, gamedig, playwright, etc.
+	Type string `json:"type" validate:"required" enums:"http,http-keyword,http-json-query,steam,gamedig,playwright,push,tcp,ping,dns,docker,grpc-keyword,snmp,mongodb,mysql,postgres,sqlserver,redis,mqtt,rabbitmq,kafka-producer" example:"http"`
 
 	// monitor name
 	Name string `json:"name" example:"Monitor"`
@@ -34,6 +35,7 @@ type Monitor struct {
 	Active bool          `json:"active"`
 	Status MonitorStatus `json:"status"`
 
+	// Monitor configuration JSON; fields depend on Type.
 	Config    string `json:"config"`
 	ProxyId   string `json:"proxy_id"`
 	PushToken string `json:"push_token"`

@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 
 	"go.uber.org/zap"
 )
@@ -113,7 +113,7 @@ func (p *PagerTreeSender) Send(ctx context.Context, configJSON, message string, 
 
 	// Add tags
 	payload.Tags = []string{
-		"peekaping",
+		"pulsewatch",
 		fmt.Sprintf("monitor-type:%s", mon.Type),
 	}
 

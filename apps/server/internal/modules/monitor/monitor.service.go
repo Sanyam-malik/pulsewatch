@@ -3,13 +3,13 @@ package monitor
 import (
 	"context"
 	"fmt"
-	"peekaping/internal/modules/events"
-	"peekaping/internal/modules/healthcheck/executor"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor_notification"
-	"peekaping/internal/modules/monitor_tag"
-	"peekaping/internal/modules/shared"
-	"peekaping/internal/modules/stats"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/events"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/healthcheck/executor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_notification"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_tag"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/stats"
 	"time"
 
 	"go.uber.org/zap"
@@ -197,6 +197,9 @@ func (mr *MonitorServiceImpl) UpdatePartial(ctx context.Context, id string, moni
 	if err != nil {
 		return nil, err
 	}
+	if updatedMonitor == nil {
+		return nil, fmt.Errorf("%w: monitor %s", ErrMonitorNotFound, id)
+	}
 
 	// Emit monitor updated event
 	if !noPublish {
@@ -210,7 +213,15 @@ func (mr *MonitorServiceImpl) UpdatePartial(ctx context.Context, id string, moni
 }
 
 func (mr *MonitorServiceImpl) Delete(ctx context.Context, id string) error {
-	err := mr.monitorRepository.Delete(ctx, id)
+	monitor, err := mr.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if monitor == nil {
+		return fmt.Errorf("%w: monitor %s", ErrMonitorNotFound, id)
+	}
+
+	err = mr.monitorRepository.Delete(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -240,6 +251,13 @@ func (mr *MonitorServiceImpl) ValidateMonitorConfig(
 }
 
 func (mr *MonitorServiceImpl) GetHeartbeats(ctx context.Context, id string, limit, page int, important *bool, reverse bool) ([]*heartbeat.Model, error) {
+	monitor, err := mr.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if monitor == nil {
+		return nil, fmt.Errorf("%w: monitor %s", ErrMonitorNotFound, id)
+	}
 	return mr.heartbeatService.FindByMonitorIDPaginated(ctx, id, limit, page, important, reverse)
 }
 
@@ -270,7 +288,7 @@ func (mr *MonitorServiceImpl) GetStatPoints(ctx context.Context, id string, sinc
 		return nil, err
 	}
 	if monitor == nil {
-		return nil, fmt.Errorf("monitor not found")
+		return nil, fmt.Errorf("%w: monitor %s", ErrMonitorNotFound, id)
 	}
 
 	// Use the new method that accepts monitor interval
@@ -305,6 +323,14 @@ func (mr *MonitorServiceImpl) GetStatPoints(ctx context.Context, id string, sinc
 
 // GetCustomUptimeStatsShort returns uptime percentages for 24h, 30d, 365d
 func (mr *MonitorServiceImpl) GetUptimeStats(ctx context.Context, id string) (*CustomUptimeStatsDto, error) {
+	monitor, err := mr.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if monitor == nil {
+		return nil, fmt.Errorf("%w: monitor %s", ErrMonitorNotFound, id)
+	}
+
 	now := time.Now().UTC()
 	periods := map[string]time.Duration{
 		"24h":  24 * time.Hour,

@@ -1,6 +1,9 @@
 ---
 import Button from "./Button.astro";
 const today = new Date();
+const baseUrl = import.meta.env.BASE_URL.endsWith("/")
+  ? import.meta.env.BASE_URL
+  : `${import.meta.env.BASE_URL}/`;
 ---
 
 <section>
@@ -12,7 +15,7 @@ const today = new Date();
       alerts only when it actually matters
     </div>
     <div class="flex justify-center">
-      <Button href="https://github.com/0xfurai/peekaping?tab=readme-ov-file#quick-start-docker--sqlite">Get Started</Button>
+      <Button href="https://github.com/Sanyam-malik/pulsewatch#quick-start-docker--sqlite">Get Started</Button>
     </div>
     <div
       class="flex flex-col sm:flex-row gap-6 sm:gap-0 font-semibold leading-[135%] text-[#373737] justify-between w-full items-center sm:items-end mt-8"
@@ -20,16 +23,16 @@ const today = new Date();
       <nav>
         <ul class="flex flex-wrap justify-center gap-4">
           <li>
-            <a href="/#monitors">Monitors</a>
+            <a href={`${baseUrl}#monitors`}>Monitors</a>
           </li>
           <li>
-            <a href="/#alerts">Alerts</a>
+            <a href={`${baseUrl}#alerts`}>Alerts</a>
           </li>
           <li>
-            <a href="/#testimonials">Testimonials</a>
+            <a href={`${baseUrl}#testimonials`}>Testimonials</a>
           </li>
           <li>
-            <a href="https://docs.peekaping.com" target="_blank">Docs</a>
+            <a href="https://sanyam-malik.github.io/pulsewatch/docs/" target="_blank">Docs</a>
           </li>
         </ul>
       </nav>
@@ -37,7 +40,7 @@ const today = new Date();
       <div class="flex items-center gap-4">
         <div class="flex justify-center gap-6">
           <a href="https://x.com/0xfurai" target="_blank">
-            <span class="sr-only">Follow 0xfurai on X</span>
+            <span class="sr-only">Upstream Peekaping project on X</span>
             <svg
               width="21"
               height="21"
@@ -50,8 +53,8 @@ const today = new Date();
                 fill="#373737"></path>
             </svg>
           </a>
-          <a href="https://github.com/0xfurai/peekaping" target="_blank">
-            <span class="sr-only">Go to Peekaping's GitHub repo</span>
+          <a href="https://github.com/Sanyam-malik/pulsewatch" target="_blank">
+            <span class="sr-only">Go to Pulsewatch's GitHub repo</span>
             <svg viewBox="0 0 16 16" aria-hidden="true" width="21" height="21"
               ><path
                 fill="currentColor"
@@ -59,8 +62,8 @@ const today = new Date();
               ></path></svg
             >
           </a>
-          <a href="https://discord.gg/Xuv8b5AhPF" target="_blank">
-            <span class="sr-only">Go to Peekaping's Discord</span>
+          <a href="https://github.com/Sanyam-malik/pulsewatch/discussions" target="_blank">
+            <span class="sr-only">Go to Pulsewatch's GitHub discussions</span>
             <svg
               width="21"
               height="21"
@@ -76,8 +79,8 @@ const today = new Date();
         </div>
 
         <img
-          src="/logo-mascot.webp"
-          alt="Peekaping Logo"
+          src={`${baseUrl}logo-mascot.webp`}
+          alt="Pulsewatch mascot"
           class="w-[120px] h-[120px] sm:w-[162px] sm:h-[162px] -mt-[32px] sm:-mt-[62px] -mb-[12px] sm:-mr-[12px]"
         />
       </div>
@@ -88,19 +91,19 @@ const today = new Date();
     class="max-w-screen-lg mx-auto p-6 sm:p-8 leading-[135%] font-semibold text-[#AFAFAF] flex flex-col sm:flex-row gap-4 sm:gap-0 items-center justify-between"
   >
     <div>
-      &copy; {today.getFullYear()} Peekaping. All rights reserved.
+      Pulsewatch is a community hard fork of Peekaping.
     </div>
 
-    <a href="/privacy-policy">Privacy Policy</a>
-    <a href="/terms-and-conditions">Terms and Conditions</a>
+    <a href="https://peekaping.com/privacy-policy" target="_blank">Upstream Privacy Policy</a>
+    <a href="https://peekaping.com/terms-and-conditions" target="_blank">Upstream Terms</a>
 
-    <div class="text-center">Made with 💜 by the Peekaping team</div>
+    <div class="text-center">Maintained by the Pulsewatch community</div>
   </div>
 </section>
 
 <style>
   .footer-bg {
-    background-image: url("/footer-bg.webp");
+    background-image: url("/pulsewatch/footer-bg.webp");
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;

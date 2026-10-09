@@ -1,8 +1,8 @@
 package monitor_tls_info
 
 import (
-	"peekaping/internal/config"
-	"peekaping/internal/utils"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
 
 	"github.com/uptrace/bun"
 	"go.mongodb.org/mongo-driver/mongo"

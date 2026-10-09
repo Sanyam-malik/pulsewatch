@@ -3,7 +3,7 @@ package stats
 import (
 	"context"
 	"fmt"
-	"peekaping/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"

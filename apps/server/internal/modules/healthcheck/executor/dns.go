@@ -3,8 +3,8 @@ package executor
 import (
 	"context"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 	"net"
-	"peekaping/internal/modules/shared"
 	"strings"
 	"time"
 

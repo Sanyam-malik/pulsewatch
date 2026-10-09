@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"peekaping/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -17,9 +17,11 @@ var (
 )
 
 type Claims struct {
-	UserID string `json:"userId"`
-	Email  string `json:"email"`
-	Type   string `json:"type"` // "access" or "refresh"
+	UserID  string `json:"userId"`
+	Email   string `json:"email"`
+	GroupID string `json:"groupId,omitempty"`
+	Role    string `json:"role,omitempty"`
+	Type    string `json:"type"` // "access" or "refresh"
 	jwt.RegisteredClaims
 }
 
@@ -35,7 +37,7 @@ func NewTokenMaker(settingService shared.SettingService, logger *zap.SugaredLogg
 	}
 }
 
-func (maker *TokenMaker) CreateAccessToken(ctx context.Context, user *Model) (string, error) {
+func (maker *TokenMaker) CreateAccessToken(ctx context.Context, user *Model, membership ...*Membership) (string, error) {
 	// Get access token expiration
 	expirySetting, err := maker.settingService.GetByKey(ctx, "ACCESS_TOKEN_EXPIRED_IN")
 	if err != nil {
@@ -59,10 +61,10 @@ func (maker *TokenMaker) CreateAccessToken(ctx context.Context, user *Model) (st
 		return "", fmt.Errorf("access token secret key setting not found")
 	}
 
-	return maker.createToken(user, "access", accessExpiry, secretSetting.Value)
+	return maker.createToken(user, "access", accessExpiry, secretSetting.Value, membership...)
 }
 
-func (maker *TokenMaker) CreateRefreshToken(ctx context.Context, user *Model) (string, error) {
+func (maker *TokenMaker) CreateRefreshToken(ctx context.Context, user *Model, membership ...*Membership) (string, error) {
 	// Get refresh token expiration
 	expirySetting, err := maker.settingService.GetByKey(ctx, "REFRESH_TOKEN_EXPIRED_IN")
 	if err != nil {
@@ -86,10 +88,10 @@ func (maker *TokenMaker) CreateRefreshToken(ctx context.Context, user *Model) (s
 		return "", fmt.Errorf("refresh token secret key setting not found")
 	}
 
-	return maker.createToken(user, "refresh", refreshExpiry, secretSetting.Value)
+	return maker.createToken(user, "refresh", refreshExpiry, secretSetting.Value, membership...)
 }
 
-func (maker *TokenMaker) createToken(user *Model, tokenType string, duration time.Duration, secretKey string) (string, error) {
+func (maker *TokenMaker) createToken(user *Model, tokenType string, duration time.Duration, secretKey string, membership ...*Membership) (string, error) {
 	claims := &Claims{
 		UserID: user.ID,
 		Email:  user.Email,
@@ -99,6 +101,10 @@ func (maker *TokenMaker) createToken(user *Model, tokenType string, duration tim
 			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 			NotBefore: jwt.NewNumericDate(time.Now().UTC()),
 		},
+	}
+	if len(membership) > 0 && membership[0] != nil {
+		claims.GroupID = membership[0].GroupID
+		claims.Role = membership[0].Role
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

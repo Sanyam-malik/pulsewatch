@@ -3,17 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/infra"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/events"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/healthcheck"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/worker"
+	"github.com/sanyam-malik/pulsewatch/internal/version"
 	"log"
 	"os"
 	"os/signal"
-	"peekaping/internal"
-	"peekaping/internal/config"
-	"peekaping/internal/infra"
-	"peekaping/internal/modules/events"
-	"peekaping/internal/modules/healthcheck"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/worker"
-	"peekaping/internal/version"
 	"syscall"
 
 	"go.uber.org/dig"
@@ -21,7 +21,7 @@ import (
 )
 
 func main() {
-	log.Printf("Starting Peekaping Worker v%s", version.Version)
+	log.Printf("Starting Pulsewatch Worker v%s", version.Version)
 
 	// Load and validate Worker-specific config
 	cfg, err := LoadAndValidate("../..")

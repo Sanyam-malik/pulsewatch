@@ -3,9 +3,10 @@ package monitor
 import (
 	"context"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
 	"time"
 
-	"peekaping/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
@@ -29,6 +30,7 @@ type sqlModel struct {
 	Config         string               `bun:"config"`
 	ProxyId        *string              `bun:"proxy_id"`
 	PushToken      string               `bun:"push_token"`
+	GroupID        string               `bun:"group_id"`
 }
 
 func toDomainModelFromSQL(sm *sqlModel) *Model {
@@ -40,6 +42,7 @@ func toDomainModelFromSQL(sm *sqlModel) *Model {
 
 	return &Model{
 		ID:             sm.ID,
+		GroupID:        sm.GroupID,
 		Type:           sm.Type,
 		Name:           sm.Name,
 		Interval:       sm.Interval,
@@ -91,13 +94,41 @@ func NewSQLRepository(db *bun.DB) MonitorRepository {
 	return &SQLRepositoryImpl{db: db}
 }
 
+func (r *SQLRepositoryImpl) validateProxyGroup(ctx context.Context, proxyID string) error {
+	groupID, scoped := auth.GroupIDFromContext(ctx)
+	if !scoped || proxyID == "" {
+		return nil
+	}
+	exists, err := r.db.NewSelect().
+		Table("proxies").
+		Column("id").
+		Where("id = ? AND group_id = ?", proxyID, groupID).
+		Exists(ctx)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("proxy not found in the selected group")
+	}
+	return nil
+}
+
 func (r *SQLRepositoryImpl) Create(ctx context.Context, monitor *Model) (*Model, error) {
+	if err := r.validateProxyGroup(ctx, monitor.ProxyId); err != nil {
+		return nil, err
+	}
 	sm := toSQLModel(monitor)
 	sm.ID = uuid.New().String()
 	sm.CreatedAt = time.Now()
 	sm.UpdatedAt = time.Now()
 
-	_, err := r.db.NewInsert().Model(sm).Returning("*").Exec(ctx)
+	query := r.db.NewInsert().Model(sm).Returning("*")
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		sm.GroupID = groupID
+	} else {
+		query = query.Column("id", "type", "name", "interval", "timeout", "max_retries", "retry_interval", "resend_interval", "active", "status", "created_at", "updated_at", "config", "proxy_id", "push_token")
+	}
+	_, err := query.Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +138,11 @@ func (r *SQLRepositoryImpl) Create(ctx context.Context, monitor *Model) (*Model,
 
 func (r *SQLRepositoryImpl) FindByID(ctx context.Context, id string) (*Model, error) {
 	sm := new(sqlModel)
-	err := r.db.NewSelect().Model(sm).Where("id = ?", id).Scan(ctx)
+	query := r.db.NewSelect().Model(sm).Where("id = ?", id)
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	err := query.Scan(ctx)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			return nil, nil
@@ -123,10 +158,13 @@ func (r *SQLRepositoryImpl) FindByIDs(ctx context.Context, ids []string) ([]*Mod
 	}
 
 	var sms []*sqlModel
-	err := r.db.NewSelect().
+	query := r.db.NewSelect().
 		Model(&sms).
-		Where("id IN (?)", bun.In(ids)).
-		Scan(ctx)
+		Where("id IN (?)", bun.In(ids))
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	err := query.Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -148,6 +186,9 @@ func (r *SQLRepositoryImpl) FindAll(
 	tagIds []string,
 ) ([]*Model, error) {
 	query := r.db.NewSelect().Model((*sqlModel)(nil))
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
 
 	// If tagIds filtering is requested, use JOIN
 	if len(tagIds) > 0 {
@@ -190,11 +231,14 @@ func (r *SQLRepositoryImpl) FindAll(
 
 func (r *SQLRepositoryImpl) FindActive(ctx context.Context) ([]*Model, error) {
 	var sms []*sqlModel
-	err := r.db.NewSelect().
+	query := r.db.NewSelect().
 		Model(&sms).
 		Where("active = ?", true).
-		Order("id DESC").
-		Scan(ctx)
+		Order("id DESC")
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	err := query.Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -208,13 +252,16 @@ func (r *SQLRepositoryImpl) FindActive(ctx context.Context) ([]*Model, error) {
 
 func (r *SQLRepositoryImpl) FindActivePaginated(ctx context.Context, page int, limit int) ([]*Model, error) {
 	var sms []*sqlModel
-	err := r.db.NewSelect().
+	query := r.db.NewSelect().
 		Model(&sms).
 		Where("active = ?", true).
 		Order("id DESC").
 		Limit(limit).
-		Offset(page * limit).
-		Scan(ctx)
+		Offset(page * limit)
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	err := query.Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -227,14 +274,20 @@ func (r *SQLRepositoryImpl) FindActivePaginated(ctx context.Context, page int, l
 }
 
 func (r *SQLRepositoryImpl) UpdateFull(ctx context.Context, id string, monitor *Model) error {
+	if err := r.validateProxyGroup(ctx, monitor.ProxyId); err != nil {
+		return err
+	}
 	sm := toSQLModel(monitor)
 	sm.UpdatedAt = time.Now()
 
-	result, err := r.db.NewUpdate().
+	query := r.db.NewUpdate().
 		Model(sm).
 		Where("id = ?", id).
-		ExcludeColumn("id", "created_at").
-		Exec(ctx)
+		ExcludeColumn("id", "created_at", "group_id")
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	result, err := query.Exec(ctx)
 
 	if err != nil {
 		return err
@@ -253,7 +306,15 @@ func (r *SQLRepositoryImpl) UpdateFull(ctx context.Context, id string, monitor *
 }
 
 func (r *SQLRepositoryImpl) UpdatePartial(ctx context.Context, id string, monitor *UpdateModel) error {
+	if monitor.ProxyId != nil {
+		if err := r.validateProxyGroup(ctx, *monitor.ProxyId); err != nil {
+			return err
+		}
+	}
 	query := r.db.NewUpdate().Model((*sqlModel)(nil)).Where("id = ?", id)
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
 
 	hasUpdates := false
 
@@ -323,25 +384,36 @@ func (r *SQLRepositoryImpl) UpdatePartial(ctx context.Context, id string, monito
 }
 
 func (r *SQLRepositoryImpl) Delete(ctx context.Context, id string) error {
-	_, err := r.db.NewDelete().Model((*sqlModel)(nil)).Where("id = ?", id).Exec(ctx)
+	query := r.db.NewDelete().Model((*sqlModel)(nil)).Where("id = ?", id)
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	_, err := query.Exec(ctx)
 	return err
 }
 
 func (r *SQLRepositoryImpl) RemoveProxyReference(ctx context.Context, proxyId string) error {
-	_, err := r.db.NewUpdate().
+	query := r.db.NewUpdate().
 		Model((*sqlModel)(nil)).
 		Set("proxy_id = ?", nil).
-		Where("proxy_id = ?", proxyId).
-		Exec(ctx)
+		Where("proxy_id = ?", proxyId)
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	_, err := query.Exec(ctx)
 	return err
 }
 
 func (r *SQLRepositoryImpl) FindByProxyId(ctx context.Context, proxyId string) ([]*Model, error) {
 	var sms []*sqlModel
-	err := r.db.NewSelect().
+	query := r.db.NewSelect().
 		Model(&sms).
 		Where("proxy_id = ?", proxyId).
-		Scan(ctx)
+		ExcludeColumn("group_id")
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	err := query.Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -355,7 +427,11 @@ func (r *SQLRepositoryImpl) FindByProxyId(ctx context.Context, proxyId string) (
 
 func (r *SQLRepositoryImpl) FindOneByPushToken(ctx context.Context, pushToken string) (*Model, error) {
 	sm := new(sqlModel)
-	err := r.db.NewSelect().Model(sm).Where("push_token = ?", pushToken).Scan(ctx)
+	query := r.db.NewSelect().Model(sm).Where("push_token = ?", pushToken)
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	err := query.Scan(ctx)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			return nil, nil

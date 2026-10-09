@@ -39,14 +39,14 @@ html { scroll-behavior: smooth; }
 
 @font-face {
   font-family: "Geist";
-  src: url("/fonts/geist-regular.woff2") format("woff2");
+  src: url("/pulsewatch/fonts/geist-regular.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Geist";
-  src: url("/fonts/geist-bold.woff2") format("woff2");
+  src: url("/pulsewatch/fonts/geist-bold.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -54,7 +54,7 @@ html { scroll-behavior: smooth; }
 
 @font-face {
   font-family: "Geist";
-  src: url("/fonts/geist-semibold.woff2") format("woff2");
+  src: url("/pulsewatch/fonts/geist-semibold.woff2") format("woff2");
   font-weight: 600;
   font-style: normal;
   font-display: swap;
@@ -92,7 +92,7 @@ body {
 }
 
 .bg-gradient {
-  background-image: url("/hero-section-bg.webp");
+  background-image: url("/pulsewatch/hero-section-bg.webp");
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;

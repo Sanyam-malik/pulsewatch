@@ -36,6 +36,12 @@ import RedisForm from "./redis";
 import MQTTForm from "./mqtt";
 import RabbitMQForm from "./rabbitmq";
 import KafkaProducerForm from "./kafka-producer";
+import { deserialize as steamDeserialize } from "./steam/schema";
+import SteamForm from "./steam";
+import { deserialize as gameDigDeserialize } from "./gamedig/schema";
+import GameDigForm from "./gamedig";
+import { deserialize as playwrightDeserialize } from "./playwright/schema";
+import PlaywrightForm from "./playwright";
 
 import type { ComponentType } from "react";
 
@@ -127,6 +133,18 @@ const monitorTypeRegistry: Record<string, MonitorTypeConfig> = {
   "kafka-producer": {
     deserialize: kafkaProducerDeserialize,
     component: KafkaProducerForm,
+  },
+  steam: {
+    deserialize: steamDeserialize,
+    component: SteamForm,
+  },
+  gamedig: {
+    deserialize: gameDigDeserialize,
+    component: GameDigForm,
+  },
+  playwright: {
+    deserialize: playwrightDeserialize,
+    component: PlaywrightForm,
   },
 };
 

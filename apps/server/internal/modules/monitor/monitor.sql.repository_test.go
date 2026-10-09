@@ -3,7 +3,8 @@ package monitor
 import (
 	"context"
 	"database/sql"
-	"peekaping/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 	"testing"
 	"time"
 
@@ -38,8 +39,12 @@ func setupTestDB(t *testing.T) *bun.DB {
 			config TEXT,
 			proxy_id TEXT,
 			push_token TEXT
+			,group_id TEXT
 		)
 	`)
+	require.NoError(t, err)
+
+	_, err = db.Exec(`CREATE TABLE proxies (id TEXT PRIMARY KEY, group_id TEXT NOT NULL)`)
 	require.NoError(t, err)
 
 	// Create monitor_tags table for testing JOIN functionality
@@ -58,6 +63,43 @@ func setupTestDB(t *testing.T) *bun.DB {
 	})
 
 	return db
+}
+
+func TestSQLRepository_GroupScope(t *testing.T) {
+	db := setupTestDB(t)
+	repo := NewSQLRepository(db)
+	ctxA := auth.WithIdentity(context.Background(), "group-a", auth.RoleOwner)
+	ctxB := auth.WithIdentity(context.Background(), "group-b", auth.RoleMember)
+
+	first, err := repo.Create(ctxA, createTestMonitor("Group A", true, 1))
+	require.NoError(t, err)
+	_, err = repo.Create(ctxB, createTestMonitor("Group B", true, 1))
+	require.NoError(t, err)
+
+	visible, err := repo.FindAll(ctxB, 0, 10, "", nil, nil, nil)
+	require.NoError(t, err)
+	require.Len(t, visible, 1)
+	require.Equal(t, "Group B", visible[0].Name)
+	hidden, err := repo.FindByID(ctxB, first.ID)
+	require.NoError(t, err)
+	require.Nil(t, hidden)
+	require.ErrorIs(t, repo.UpdateFull(ctxB, first.ID, first), ErrMonitorNotFound)
+}
+
+func TestSQLRepository_RejectsCrossGroupProxyReference(t *testing.T) {
+	db := setupTestDB(t)
+	repo := NewSQLRepository(db)
+	_, err := db.Exec("INSERT INTO proxies (id, group_id) VALUES (?, ?)", "proxy-b", "group-b")
+	require.NoError(t, err)
+
+	monitor := createTestMonitor("Cross-group proxy", true, 1)
+	monitor.ProxyId = "proxy-b"
+	_, err = repo.Create(auth.WithIdentity(context.Background(), "group-a", auth.RoleOwner), monitor)
+	require.ErrorContains(t, err, "proxy not found in the selected group")
+
+	created, err := repo.Create(auth.WithIdentity(context.Background(), "group-b", auth.RoleOwner), monitor)
+	require.NoError(t, err)
+	require.Equal(t, "proxy-b", created.ProxyId)
 }
 
 func createTestMonitor(name string, active bool, status shared.MonitorStatus) *shared.Monitor {

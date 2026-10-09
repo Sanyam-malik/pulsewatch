@@ -1,7 +1,7 @@
 package bruteforce
 
 import (
-	"peekaping/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

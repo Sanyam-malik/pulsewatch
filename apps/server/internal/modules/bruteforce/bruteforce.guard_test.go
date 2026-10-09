@@ -5,9 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
 	"net/http"
 	"net/http/httptest"
-	"peekaping/internal/config"
 	"testing"
 	"time"
 

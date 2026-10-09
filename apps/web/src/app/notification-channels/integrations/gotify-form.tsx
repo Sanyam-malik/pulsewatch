@@ -139,7 +139,7 @@ export default function GotifyForm() {
             <FormLabel>{t("notifications.form.gotify.custom_title_label")}</FormLabel>
             <FormControl>
               <Input
-                placeholder="Peekaping Alert - {{ monitor.name }}"
+                placeholder="Pulsewatch Alert - {{ monitor.name }}"
                 {...field}
               />
             </FormControl>

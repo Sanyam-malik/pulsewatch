@@ -2,7 +2,7 @@ package notification_channel
 
 import (
 	"context"
-	"peekaping/internal/modules/monitor_notification"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_notification"
 
 	"go.uber.org/zap"
 )

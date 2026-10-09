@@ -17,6 +17,7 @@ on:
 
 jobs:
   deploy-demo:
+    if: github.repository == '0xfurai/peekaping'
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to Demo Environment

@@ -2,7 +2,7 @@ package executor
 
 import (
 	"context"
-	"peekaping/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
 	"testing"
 	"time"
 

@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
-	"peekaping/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 	"testing"
 	"time"
 

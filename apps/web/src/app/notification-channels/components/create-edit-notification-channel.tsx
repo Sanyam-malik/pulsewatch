@@ -44,6 +44,13 @@ import * as SendGridForm from "../integrations/sendgrid-form";
 import * as PushbulletForm from "../integrations/pushbullet-form";
 import * as PagerTreeForm from "../integrations/pagertree";
 import * as LineForm from "../integrations/line-form";
+import * as MicrosoftTeamsForm from "../integrations/microsoft-teams-form";
+import * as WhapiForm from "../integrations/whapi-form";
+import * as CallMeBotForm from "../integrations/callmebot-form";
+import * as AliyunSMSForm from "../integrations/aliyun-sms-form";
+import * as DingDingForm from "../integrations/dingding-form";
+import * as ClickSendSMSForm from "../integrations/clicksend-sms-form";
+import * as RocketChatForm from "../integrations/rocket-chat-form";
 
 import { useEffect } from "react";
 import { commonMutationErrorHandler } from "@/lib/utils";
@@ -72,6 +79,13 @@ const typeFormRegistry = {
   pushbullet: PushbulletForm,
   pagertree: PagerTreeForm,
   line: LineForm,
+  microsoft_teams: MicrosoftTeamsForm,
+  whatsapp_whapi: WhapiForm,
+  callmebot: CallMeBotForm,
+  aliyun_sms: AliyunSMSForm,
+  dingding: DingDingForm,
+  clicksend_sms: ClickSendSMSForm,
+  rocket_chat: RocketChatForm,
 };
 
 const notificationSchema = z
@@ -104,8 +118,28 @@ const notificationSchema = z
       PushbulletForm.schema,
       PagerTreeForm.schema,
       LineForm.schema,
+      MicrosoftTeamsForm.schema,
+      WhapiForm.schema,
+      CallMeBotForm.schema,
+      AliyunSMSForm.schema,
+      DingDingForm.schema,
+      ClickSendSMSForm.schema,
+      RocketChatForm.schema,
     ] as const)
-  );
+  )
+  .superRefine((data, context) => {
+    if (
+      data.type === "callmebot" &&
+      data.service !== "facebook" &&
+      !data.recipient?.trim()
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["recipient"],
+        message: "Recipient is required for WhatsApp and Telegram",
+      });
+    }
+  });
 
 export type NotificationForm = z.infer<typeof notificationSchema>;
 
@@ -232,6 +266,13 @@ export default function CreateEditNotificationChannel({
                     | "pushbullet"
                     | "pagertree"
                     | "line"
+                    | "microsoft_teams"
+                    | "whatsapp_whapi"
+                    | "callmebot"
+                    | "aliyun_sms"
+                    | "dingding"
+                    | "clicksend_sms"
+                    | "rocket_chat"
                 );
               }}
               value={type}
@@ -244,7 +285,7 @@ export default function CreateEditNotificationChannel({
               <SelectContent>
                 {notificationTypes.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
-                    {item.label}
+                    {t(`notifications.types.${item.value}`, { defaultValue: item.label })}
                   </SelectItem>
                 ))}
               </SelectContent>

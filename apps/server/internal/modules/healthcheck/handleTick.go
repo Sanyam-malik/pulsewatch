@@ -2,9 +2,9 @@ package healthcheck
 
 import (
 	"context"
-	"peekaping/internal/modules/healthcheck/executor"
-	"peekaping/internal/modules/proxy"
-	"peekaping/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/healthcheck/executor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/proxy"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 	"time"
 )
 

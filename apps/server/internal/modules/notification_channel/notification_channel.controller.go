@@ -1,11 +1,12 @@
 package notification_channel
 
 import (
+	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
 	"net/http"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/modules/shared"
-	"peekaping/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -24,6 +25,17 @@ func NewController(
 		service,
 		logger,
 	}
+}
+
+func validateNotificationChannelConfig(channelType, config string) error {
+	integration, ok := GetNotificationChannelProvider(channelType)
+	if !ok {
+		return fmt.Errorf("unsupported notification type")
+	}
+	if err := integration.Validate(config); err != nil {
+		return fmt.Errorf("invalid config: %w", err)
+	}
+	return nil
 }
 
 // @Router		/notification-channels [get]
@@ -89,14 +101,8 @@ func (ic *Controller) Create(ctx *gin.Context) {
 		return
 	}
 
-	integration, ok := GetNotificationChannelProvider(notification_channel.Type)
-	if !ok {
-		ctx.JSON(http.StatusBadRequest, utils.NewFailResponse("Unsupported notification type"))
-		return
-	}
-	err := integration.Validate(notification_channel.Config)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, utils.NewFailResponse("Invalid config: "+err.Error()))
+	if err := validateNotificationChannelConfig(notification_channel.Type, notification_channel.Config); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.NewFailResponse(err.Error()))
 		return
 	}
 
@@ -163,6 +169,10 @@ func (ic *Controller) UpdateFull(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, utils.NewFailResponse(err.Error()))
 		return
 	}
+	if err := validateNotificationChannelConfig(notification.Type, notification.Config); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.NewFailResponse(err.Error()))
+		return
+	}
 
 	updatedNotification, err := ic.service.UpdateFull(ctx, id, &notification)
 	if err != nil {
@@ -197,6 +207,10 @@ func (ic *Controller) UpdatePartial(ctx *gin.Context) {
 
 	// validate
 	if err := utils.Validate.Struct(notification); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.NewFailResponse(err.Error()))
+		return
+	}
+	if err := validateNotificationChannelConfig(notification.Type, notification.Config); err != nil {
 		ctx.JSON(http.StatusBadRequest, utils.NewFailResponse(err.Error()))
 		return
 	}
@@ -258,19 +272,14 @@ func (ic *Controller) Test(ctx *gin.Context) {
 		return
 	}
 
-	integration, ok := GetNotificationChannelProvider(notificationChannel.Type)
-	if !ok {
-		ctx.JSON(http.StatusBadRequest, utils.NewFailResponse("Unsupported notification type"))
+	if err := validateNotificationChannelConfig(notificationChannel.Type, notificationChannel.Config); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.NewFailResponse(err.Error()))
 		return
 	}
-	err := integration.Validate(notificationChannel.Config)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, utils.NewFailResponse("Invalid config: "+err.Error()))
-		return
-	}
+	integration, _ := GetNotificationChannelProvider(notificationChannel.Type)
 
 	// Create a test message and monitor for the notification
-	testMessage := "This is a test notification from Peekaping"
+	testMessage := "This is a test notification from Pulsewatch"
 	testMonitor := &monitor.Model{
 		Name: "Test Monitor",
 		Type: "http",
@@ -281,7 +290,7 @@ func (ic *Controller) Test(ctx *gin.Context) {
 	}
 
 	// Send the test notification
-	err = integration.Send(ctx, notificationChannel.Config, testMessage, testMonitor, testHeartbeat)
+	err := integration.Send(ctx, notificationChannel.Config, testMessage, testMonitor, testHeartbeat)
 	if err != nil {
 		ic.logger.Errorw("Failed to send test notification", "error", err)
 		ctx.JSON(http.StatusInternalServerError, utils.NewFailResponse("Failed to send test notification: "+err.Error()))

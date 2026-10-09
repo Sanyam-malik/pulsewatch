@@ -420,6 +420,8 @@ definitions:
         example: true
         type: boolean
       config:
+        description: JSON-encoded monitor-specific configuration. HTTP monitors may include condition_operator and up to 20 status, response-time, or JSON-path conditions; see the monitor conditions guide.
+        example: '{"host":"game.example.com","port":27015}'
         type: string
       interval:
         example: 60
@@ -464,13 +466,31 @@ definitions:
         minimum: 16
         type: integer
       type:
+        description: Monitor type. Configuration fields vary by type.
+        enum:
+        - http
+        - http-keyword
+        - http-json-query
+        - steam
+        - gamedig
+        - playwright
+        - push
+        - tcp
+        - ping
+        - dns
+        - docker
+        - grpc-keyword
+        - snmp
+        - mongodb
+        - mysql
+        - postgres
+        - sqlserver
+        - redis
+        - mqtt
+        - rabbitmq
+        - kafka-producer
         example: http
         type: string
-    required:
-    - name
-    - notification_ids
-    - type
-    type: object
   monitor.CustomUptimeStatsDto:
     properties:
       7d:
@@ -487,6 +507,7 @@ definitions:
       active:
         type: boolean
       config:
+        description: Monitor configuration JSON; fields depend on type.
         type: string
       created_at:
         type: string
@@ -528,7 +549,29 @@ definitions:
         example: 16
         type: integer
       type:
-        description: 'connection type: http, tcp, ping, etc'
+        description: 'Monitor type: http, http-keyword, http-json-query, steam, gamedig, playwright, and other registered types.'
+        enum:
+        - http
+        - http-keyword
+        - http-json-query
+        - steam
+        - gamedig
+        - playwright
+        - push
+        - tcp
+        - ping
+        - dns
+        - docker
+        - grpc-keyword
+        - snmp
+        - mongodb
+        - mysql
+        - postgres
+        - sqlserver
+        - redis
+        - mqtt
+        - rabbitmq
+        - kafka-producer
         example: http
         type: string
       updated_at:
@@ -543,6 +586,7 @@ definitions:
         example: true
         type: boolean
       config:
+        description: JSON-encoded monitor-specific configuration. HTTP monitors may include condition_operator and up to 20 status, response-time, or JSON-path conditions; see the monitor conditions guide.
         type: string
       created_at:
         example: "2024-06-01T12:00:00Z"
@@ -590,6 +634,29 @@ definitions:
         example: 10
         type: integer
       type:
+        description: Monitor type. Configuration fields vary by type.
+        enum:
+        - http
+        - http-keyword
+        - http-json-query
+        - steam
+        - gamedig
+        - playwright
+        - push
+        - tcp
+        - ping
+        - dns
+        - docker
+        - grpc-keyword
+        - snmp
+        - mongodb
+        - mysql
+        - postgres
+        - sqlserver
+        - redis
+        - mqtt
+        - rabbitmq
+        - kafka-producer
         example: http
         type: string
       updated_at:
@@ -602,6 +669,7 @@ definitions:
         example: true
         type: boolean
       config:
+        description: JSON-encoded monitor-specific configuration. HTTP monitors may include condition_operator and up to 20 status, response-time, or JSON-path conditions; see the monitor conditions guide.
         type: string
       interval:
         example: 60
@@ -644,9 +712,31 @@ definitions:
         example: 16
         type: integer
       type:
+        description: Monitor type. Configuration fields vary by type.
+        enum:
+        - http
+        - http-keyword
+        - http-json-query
+        - steam
+        - gamedig
+        - playwright
+        - push
+        - tcp
+        - ping
+        - dns
+        - docker
+        - grpc-keyword
+        - snmp
+        - mongodb
+        - mysql
+        - postgres
+        - sqlserver
+        - redis
+        - mqtt
+        - rabbitmq
+        - kafka-producer
         example: http
         type: string
-    type: object
   monitor.StatPoint:
     properties:
       down:
@@ -1394,7 +1484,7 @@ definitions:
     type: object
 info:
   contact: {}
-  title: Peekaping API
+  title: Pulsewatch API
 paths:
   /api-keys:
     get:

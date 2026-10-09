@@ -3,7 +3,9 @@ package monitor_tag
 import (
 	"context"
 	"errors"
-	"peekaping/internal/config"
+	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -65,6 +67,30 @@ func (r *MongoRepositoryImpl) Create(ctx context.Context, model *Model) (*Model,
 	tagObjectID, err := primitive.ObjectIDFromHex(model.TagID)
 	if err != nil {
 		return nil, err
+	}
+	groupID, scoped, err := auth.MongoGroupIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if scoped {
+		for _, resource := range []struct {
+			collection string
+			id         primitive.ObjectID
+		}{
+			{collection: "monitor", id: monitorObjectID},
+			{collection: "tags", id: tagObjectID},
+		} {
+			err := r.db.Collection(resource.collection).FindOne(ctx, bson.M{
+				"_id":      resource.id,
+				"group_id": groupID,
+			}).Err()
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				return nil, fmt.Errorf("monitor and tag must belong to the selected group")
+			}
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	mm := &mongoModel{

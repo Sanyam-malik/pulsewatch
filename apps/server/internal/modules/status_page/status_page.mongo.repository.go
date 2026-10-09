@@ -3,7 +3,8 @@ package status_page
 import (
 	"context"
 	"errors"
-	"peekaping/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -26,8 +27,9 @@ type mongoModel struct {
 	GoogleAnalyticsTagID string             `bson:"google_analytics_tag_id"`
 	AutoRefreshInterval  int                `bson:"auto_refresh_interval"`
 
-	CreatedAt time.Time `bson:"created_at"`
-	UpdatedAt time.Time `bson:"updated_at"`
+	CreatedAt time.Time          `bson:"created_at"`
+	UpdatedAt time.Time          `bson:"updated_at"`
+	GroupID   primitive.ObjectID `bson:"group_id,omitempty"`
 }
 
 func toDomainModel(m *mongoModel) *Model {
@@ -76,6 +78,10 @@ func NewMongoRepository(client *mongo.Client, cfg *config.Config) Repository {
 }
 
 func (r *MongoRepository) Create(ctx context.Context, statusPage *Model) (*Model, error) {
+	groupID, _, err := auth.MongoGroupIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	mm := &mongoModel{
 		ID:                  primitive.NewObjectID(),
 		Slug:                statusPage.Slug,
@@ -86,11 +92,12 @@ func (r *MongoRepository) Create(ctx context.Context, statusPage *Model) (*Model
 		Published:           statusPage.Published,
 		CreatedAt:           time.Now().UTC(),
 		UpdatedAt:           time.Now().UTC(),
+		GroupID:             groupID,
 		FooterText:          statusPage.FooterText,
 		AutoRefreshInterval: statusPage.AutoRefreshInterval,
 	}
 
-	_, err := r.collection.InsertOne(ctx, mm)
+	_, err = r.collection.InsertOne(ctx, mm)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +112,11 @@ func (r *MongoRepository) FindByID(ctx context.Context, id string) (*Model, erro
 	}
 
 	var mm mongoModel
-	err = r.collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&mm)
+	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
+	err = r.collection.FindOne(ctx, filter).Decode(&mm)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil // Not found
@@ -117,7 +128,11 @@ func (r *MongoRepository) FindByID(ctx context.Context, id string) (*Model, erro
 
 func (r *MongoRepository) FindBySlug(ctx context.Context, slug string) (*Model, error) {
 	var mm mongoModel
-	err := r.collection.FindOne(ctx, bson.M{"slug": slug}).Decode(&mm)
+	filter := bson.M{"slug": slug}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
+	err := r.collection.FindOne(ctx, filter).Decode(&mm)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil // Not found
@@ -138,6 +153,9 @@ func (r *MongoRepository) FindAll(ctx context.Context, page int, limit int, q st
 	}
 
 	filter := bson.M{}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
 	if q != "" {
 		filter["title"] = bson.M{"$regex": q, "$options": "i"}
 	}
@@ -204,7 +222,11 @@ func (r *MongoRepository) Update(ctx context.Context, id string, statusPage *Upd
 		"$set": updatePayload,
 	}
 
-	_, err = r.collection.UpdateOne(ctx, bson.M{"_id": objectID}, update)
+	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return err
+	}
+	_, err = r.collection.UpdateOne(ctx, filter, update)
 	return err
 }
 
@@ -214,6 +236,21 @@ func (r *MongoRepository) Delete(ctx context.Context, id string) error {
 		return err
 	}
 
-	_, err = r.collection.DeleteOne(ctx, bson.M{"_id": objectID})
+	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return err
+	}
+	_, err = r.collection.DeleteOne(ctx, filter)
 	return err
+}
+
+func addGroupScope(ctx context.Context, filter bson.M) error {
+	groupID, scoped, err := auth.MongoGroupIDFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	if scoped {
+		filter["group_id"] = groupID
+	}
+	return nil
 }

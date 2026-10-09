@@ -658,7 +658,86 @@
       "description": "Get started by creating your first notification channel to send alerts to your team.",
       "title": "No notification channels found"
     },
+    "types": {
+      "microsoft_teams": "Microsoft Teams",
+      "whatsapp_whapi": "WhatsApp (Whapi)",
+      "callmebot": "CallMeBot",
+      "aliyun_sms": "Aliyun SMS",
+      "dingding": "DingDing (钉钉)",
+      "clicksend_sms": "ClickSend SMS",
+      "rocket_chat": "Rocket.Chat"
+    },
     "form": {
+      "microsoft_teams": {
+        "webhook_url_label": "Incoming webhook URL",
+        "webhook_url_description": "Create an incoming webhook for the Teams channel you want to notify.",
+        "title_label": "Message title",
+        "title_description": "Optional title for the notification card."
+      },
+      "whapi": {
+        "server_url_label": "Whapi.Cloud API URL",
+        "server_url_description": "Base URL for the Whapi.Cloud API.",
+        "api_key_label": "API token",
+        "api_key_description": "Bearer token from your Whapi.Cloud channel.",
+        "recipient_label": "Recipient",
+        "recipient_description": "WhatsApp phone number with country code or a group chat ID."
+      },
+      "callmebot": {
+        "service_label": "CallMeBot service",
+        "service_description": "Select the CallMeBot integration you have activated for this recipient.",
+        "recipient_label": "Recipient",
+        "recipient_description": "Required for WhatsApp (phone number) and Telegram (username/user ID). Facebook Messenger uses the account-bound API key and does not need a recipient field.",
+        "api_key_label": "API key",
+        "api_key_description": "The API key issued by CallMeBot when activating the service.",
+        "language_label": "Telegram language",
+        "language_description": "Optional language code for Telegram text-to-speech calls; used by the Telegram call API.",
+        "api_url_label": "API endpoint override",
+        "api_url_description": "Optional endpoint override for testing or compatible CallMeBot deployments."
+      },
+      "aliyun_sms": {
+        "access_key_id_label": "AccessKey ID",
+        "access_key_secret_label": "AccessKey Secret",
+        "region_id_label": "Region ID",
+        "region_id_description": "Aliyun SMS region (defaults to cn-hangzhou).",
+        "sign_name_label": "SMS sign name",
+        "template_code_label": "SMS template code",
+        "phone_numbers_label": "Phone numbers",
+        "phone_numbers_description": "Recipient number(s) with country code; multiple numbers may be comma-separated.",
+        "template_param_label": "Template parameters (JSON)",
+        "template_param_description": "JSON object whose keys match your Aliyun template variables. Values support Liquid; {} is sent when empty.",
+        "endpoint_label": "API endpoint override",
+        "endpoint_description": "Optional endpoint override. Leave empty to use dysmsapi.aliyuncs.com."
+      },
+      "dingding": {
+        "webhook_url_label": "Robot webhook URL",
+        "webhook_url_description": "Incoming custom robot webhook URL from your DingTalk group.",
+        "secret_label": "Signing secret",
+        "secret_description": "Optional robot signing secret. Required when signature verification is enabled.",
+        "title_label": "Message title",
+        "title_description": "Title shown with the DingDing Markdown message."
+      },
+      "clicksend_sms": {
+        "username_label": "ClickSend username",
+        "username_description": "Your ClickSend account username.",
+        "api_key_label": "API key",
+        "recipient_label": "Recipient phone number",
+        "recipient_description": "Use an international number including country code.",
+        "sender_id_label": "Sender ID",
+        "sender_id_description": "Optional sender name or number; availability depends on destination.",
+        "custom_message_label": "Custom message template",
+        "custom_message_description": "Optional Liquid template. Leave empty to send the monitor alert message.",
+        "api_url_label": "API endpoint override",
+        "api_url_description": "Optional API URL override; leave empty for the ClickSend production endpoint."
+      },
+      "rocket_chat": {
+        "webhook_url_label": "Incoming webhook URL",
+        "webhook_url_description": "Incoming integration URL configured in your Rocket.Chat workspace.",
+        "username_label": "Display name",
+        "channel_label": "Channel",
+        "channel_description": "Optional destination channel override, for example #alerts.",
+        "icon_emoji_label": "Icon emoji",
+        "icon_emoji_description": "Optional emoji such as :satellite:."
+      },
       "discord": {
         "bot_display_name_description": "The name that will appear as the sender of the Discord messages.",
         "bot_display_name_label": "Bot Display Name",
@@ -694,7 +773,7 @@
         "custom_message_description": "Custom message template. Available variables",
         "custom_message_description_2": "Leave empty to use the default message.",
         "custom_message_label": "Custom Message",
-        "custom_title_description": "Custom title for the notification. Available variables: {{ msg }}, {{ monitor.name }}, {{ status }}, {{ heartbeat.* }}. Leave empty to use the default \"Peekaping\" title.",
+        "custom_title_description": "Custom title for the notification. Available variables: {{ msg }}, {{ monitor.name }}, {{ status }}, {{ heartbeat.* }}. Leave empty to use the default \"Pulsewatch\" title.",
         "custom_title_label": "Custom Title",
         "learn_more_label": "Learn more about Gotify and how to set it up at:",
         "note_description": "You need to have a Gotify server running to use this integration.",

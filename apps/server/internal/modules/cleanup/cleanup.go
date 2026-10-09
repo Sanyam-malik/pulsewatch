@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"time"
 
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor_tls_info"
-	"peekaping/internal/modules/notification_sent_history"
-	"peekaping/internal/modules/setting"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_tls_info"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/notification_sent_history"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/setting"
 
 	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"

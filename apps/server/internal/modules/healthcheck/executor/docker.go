@@ -5,8 +5,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 	"net/http"
-	"peekaping/internal/modules/shared"
 	"strings"
 	"time"
 

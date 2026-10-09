@@ -2,7 +2,9 @@ package monitor_status_page
 
 import (
 	"context"
-	"peekaping/internal/config"
+	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -61,6 +63,30 @@ func (r *MongoRepositoryImpl) Create(ctx context.Context, entity *CreateUpdateDt
 	monitorObjectID, err := primitive.ObjectIDFromHex(entity.MonitorID)
 	if err != nil {
 		return nil, err
+	}
+	groupID, scoped, err := auth.MongoGroupIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if scoped {
+		for _, resource := range []struct {
+			collection string
+			id         primitive.ObjectID
+		}{
+			{collection: "monitor", id: monitorObjectID},
+			{collection: "status_pages", id: statusPageObjectID},
+		} {
+			err := r.db.Collection(resource.collection).FindOne(ctx, bson.M{
+				"_id":      resource.id,
+				"group_id": groupID,
+			}).Err()
+			if err == mongo.ErrNoDocuments {
+				return nil, fmt.Errorf("monitor and status page must belong to the selected group")
+			}
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	mm := &mongoModel{

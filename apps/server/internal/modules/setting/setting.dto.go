@@ -1,5 +1,5 @@
 package setting
 
-import "peekaping/internal/modules/shared"
+import "github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 
 type CreateUpdateDto = shared.SettingCreateUpdateDto

@@ -5,11 +5,11 @@ import (
 	"errors"
 	"testing"
 
-	"peekaping/internal/modules/maintenance"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/modules/proxy"
-	"peekaping/internal/modules/queue"
-	"peekaping/internal/modules/worker"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/maintenance"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/proxy"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/queue"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/worker"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

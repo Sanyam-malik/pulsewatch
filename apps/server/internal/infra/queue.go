@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"peekaping/internal/config"
-	"peekaping/internal/modules/queue"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/queue"
 	"strings"
 	"time"
 

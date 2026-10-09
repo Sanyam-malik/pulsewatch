@@ -5,11 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/version"
 	"net/http"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/modules/shared"
-	"peekaping/internal/version"
 	"strings"
 	"time"
 
@@ -119,7 +119,7 @@ func (m *MattermostSender) sendTestMessage(ctx context.Context, cfg *MattermostC
 func (m *MattermostSender) sendSimpleMessage(ctx context.Context, cfg *MattermostConfig, message string) error {
 	username := cfg.Username
 	if username == "" {
-		username = "Peekaping"
+		username = "Pulsewatch"
 	}
 
 	payload := map[string]any{
@@ -145,7 +145,7 @@ func (m *MattermostSender) sendSimpleMessage(ctx context.Context, cfg *Mattermos
 func (m *MattermostSender) buildRichMessage(cfg *MattermostConfig, message string, monitor *monitor.Model, heartbeat *heartbeat.Model) map[string]any {
 	username := cfg.Username
 	if username == "" {
-		username = "Peekaping"
+		username = "Pulsewatch"
 	}
 
 	if monitor != nil && monitor.Name != "" {
@@ -276,7 +276,7 @@ func (m *MattermostSender) sendMessage(ctx context.Context, webhookURL string, p
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "Peekaping-Mattermost/"+version.Version)
+	req.Header.Set("User-Agent", "Pulsewatch-Mattermost/"+version.Version)
 
 	resp, err := m.client.Do(req)
 	if err != nil {

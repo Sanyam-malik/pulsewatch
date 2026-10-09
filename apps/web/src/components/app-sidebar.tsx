@@ -8,6 +8,9 @@ import {
   Vibrate,
   ListCheckIcon,
   Tag,
+  Users,
+  Group,
+  Siren,
 } from "lucide-react";
 
 import {
@@ -29,6 +32,7 @@ import { useLocalizedTranslation } from "@/hooks/useTranslation";
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const user = useAuthStore((state) => state.user);
   const { t } = useLocalizedTranslation();
+  const canManageGroups = user?.role === "owner" || user?.role === "admin";
 
   const data = {
     user: {
@@ -58,6 +62,16 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         icon: Tag,
       },
       {
+        title: "Monitor groups",
+        url: "/monitor-groups",
+        icon: Group,
+      },
+      {
+        title: "Incidents",
+        url: "/incidents",
+        icon: Siren,
+      },
+      {
         title: t("navigation.proxies"),
         url: "/proxies",
         icon: Network,
@@ -67,11 +81,14 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         url: "/notification-channels",
         icon: Vibrate,
       },
+      ...(canManageGroups
+        ? [{ title: "Groups and access", url: "/groups", icon: Users }]
+        : []),
     ],
     navSecondary: [
       {
         title: "Get Help",
-        url: "https://docs.peekaping.com",
+        url: "https://sanyam-malik.github.io/pulsewatch/docs/",
         icon: HelpCircleIcon,
         target: "_blank",
       },
@@ -89,7 +106,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             >
               <a href="/">
                 <ArrowUpCircleIcon className="h-5 w-5" />
-                <span className="text-base font-semibold">Peekaping</span>
+                <span className="text-base font-semibold">Pulsewatch</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

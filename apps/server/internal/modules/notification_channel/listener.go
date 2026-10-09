@@ -3,14 +3,14 @@ package notification_channel
 import (
 	"context"
 	"fmt"
-	"peekaping/internal/config"
-	"peekaping/internal/infra"
-	"peekaping/internal/modules/certificate"
-	"peekaping/internal/modules/events"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/modules/monitor_notification"
-	"peekaping/internal/modules/notification_channel/providers"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/infra"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/certificate"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/events"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_notification"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/notification_channel/providers"
 	"strings"
 
 	"go.uber.org/dig"
@@ -59,6 +59,13 @@ func NewNotificationEventListener(p NotificationEventListenerParams) *Notificati
 	RegisterNotificationChannelProvider("pushbullet", providers.NewPushbulletSender(p.Logger))
 	RegisterNotificationChannelProvider("pagertree", providers.NewPagerTreeSender(p.Logger))
 	RegisterNotificationChannelProvider("line", providers.NewLineSender(p.Logger))
+	RegisterNotificationChannelProvider("microsoft_teams", providers.NewMicrosoftTeamsSender(p.Logger))
+	RegisterNotificationChannelProvider("whatsapp_whapi", providers.NewWhapiSender(p.Logger))
+	RegisterNotificationChannelProvider("callmebot", providers.NewCallMeBotSender(p.Logger))
+	RegisterNotificationChannelProvider("aliyun_sms", providers.NewAliyunSMSSender(p.Logger))
+	RegisterNotificationChannelProvider("dingding", providers.NewDingDingSender(p.Logger))
+	RegisterNotificationChannelProvider("clicksend_sms", providers.NewClickSendSMSSender(p.Logger))
+	RegisterNotificationChannelProvider("rocket_chat", providers.NewRocketChatSender(p.Logger))
 
 	return &NotificationEventListener{
 		service:                    p.Service,

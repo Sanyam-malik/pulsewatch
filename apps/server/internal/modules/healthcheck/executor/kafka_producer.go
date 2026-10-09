@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"peekaping/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 	"strings"
 	"time"
 
@@ -134,7 +134,7 @@ func (k *KafkaProducerExecutor) Execute(ctx context.Context, monitor *Monitor, p
 	}
 
 	// Set client ID
-	config.ClientID = fmt.Sprintf("peekaping-monitor-%s", monitor.ID)
+	config.ClientID = fmt.Sprintf("pulsewatch-monitor-%s", monitor.ID)
 
 	// Create producer
 	producer, err := sarama.NewSyncProducer(cfg.Brokers, config)

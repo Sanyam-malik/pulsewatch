@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"peekaping/internal/modules/api_key"
-	"peekaping/internal/modules/auth"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/api_key"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
 
 	"go.uber.org/dig"
 	"go.uber.org/zap"

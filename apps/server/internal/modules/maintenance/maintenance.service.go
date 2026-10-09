@@ -6,8 +6,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"peekaping/internal/modules/maintenance/utils"
-	"peekaping/internal/modules/monitor_maintenance"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/maintenance/utils"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_maintenance"
 )
 
 type Service interface {

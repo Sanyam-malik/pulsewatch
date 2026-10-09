@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"peekaping/internal/config"
-	"peekaping/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -30,6 +31,7 @@ type mongoModel struct {
 	Config         string                  `bson:"config"`
 	ProxyId        *primitive.ObjectID     `bson:"proxy_id,omitempty"`
 	PushToken      string                  `bson:"push_token"`
+	GroupID        primitive.ObjectID      `bson:"group_id,omitempty"`
 }
 
 type mongoUpdateModel struct {
@@ -58,6 +60,7 @@ func toDomainModel(mm *mongoModel) *Model {
 	}
 	return &Model{
 		ID:             mm.ID.Hex(),
+		GroupID:        objectIDHex(mm.GroupID),
 		Type:           mm.Type,
 		Name:           mm.Name,
 		Interval:       mm.Interval,
@@ -121,7 +124,36 @@ func NewMongoRepository(client *mongo.Client, cfg *config.Config) MonitorReposit
 	return &MonitorRepositoryImpl{client, db, collection}
 }
 
+func (r *MonitorRepositoryImpl) validateProxyGroup(ctx context.Context, proxyID string) error {
+	groupID, scoped, err := auth.MongoGroupIDFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	if !scoped || proxyID == "" {
+		return nil
+	}
+	proxyObjectID, err := primitive.ObjectIDFromHex(proxyID)
+	if err != nil {
+		return err
+	}
+	err = r.db.Collection("proxies").FindOne(ctx, bson.M{
+		"_id":      proxyObjectID,
+		"group_id": groupID,
+	}).Err()
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return fmt.Errorf("proxy not found in the selected group")
+	}
+	return err
+}
+
 func (r *MonitorRepositoryImpl) Create(ctx context.Context, monitor *Model) (*Model, error) {
+	groupID, _, err := auth.MongoGroupIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := r.validateProxyGroup(ctx, monitor.ProxyId); err != nil {
+		return nil, err
+	}
 	var proxyObjectID *primitive.ObjectID
 	if monitor.ProxyId != "" {
 		objID, err := primitive.ObjectIDFromHex(monitor.ProxyId)
@@ -147,9 +179,10 @@ func (r *MonitorRepositoryImpl) Create(ctx context.Context, monitor *Model) (*Mo
 		Config:         monitor.Config,
 		ProxyId:        proxyObjectID,
 		PushToken:      monitor.PushToken,
+		GroupID:        groupID,
 	}
 
-	_, err := r.collection.InsertOne(ctx, mm)
+	_, err = r.collection.InsertOne(ctx, mm)
 	if err != nil {
 		return nil, err
 	}
@@ -164,6 +197,9 @@ func (r *MonitorRepositoryImpl) FindByID(ctx context.Context, id string) (*Model
 	}
 
 	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
 	var mm mongoModel
 	err = r.collection.FindOne(ctx, filter).Decode(&mm)
 	if err != nil {
@@ -203,7 +239,15 @@ func (r *MonitorRepositoryImpl) FindAll(
 		}
 
 		// Build aggregation pipeline
-		pipeline := bson.A{
+		pipeline := bson.A{}
+		groupFilter := bson.M{}
+		if err := addGroupScope(ctx, groupFilter); err != nil {
+			return nil, err
+		}
+		if len(groupFilter) > 0 {
+			pipeline = append(pipeline, bson.M{"$match": groupFilter})
+		}
+		pipeline = append(pipeline, bson.A{
 			// Lookup monitor_tags to get monitors with specified tags
 			bson.M{
 				"$lookup": bson.M{
@@ -219,10 +263,15 @@ func (r *MonitorRepositoryImpl) FindAll(
 					"tags.tag_id": bson.M{"$in": tagObjectIDs},
 				},
 			},
-		}
+		}...)
 
 		// Add additional filters
 		matchStage := bson.M{}
+		if groupID, scoped, err := auth.MongoGroupIDFromContext(ctx); err != nil {
+			return nil, err
+		} else if scoped {
+			matchStage["group_id"] = groupID
+		}
 		if q != "" {
 			matchStage["$or"] = bson.A{
 				bson.M{"name": bson.M{"$regex": q, "$options": "i"}},
@@ -275,6 +324,9 @@ func (r *MonitorRepositoryImpl) FindAll(
 		}
 
 		filter := bson.M{}
+		if err := addGroupScope(ctx, filter); err != nil {
+			return nil, err
+		}
 		if q != "" {
 			filter["$or"] = bson.A{
 				bson.M{"name": bson.M{"$regex": q, "$options": "i"}},
@@ -376,6 +428,9 @@ func buildSetMapFromUpdateModel(mu *mongoUpdateModel, includeProxyId bool, proxy
 }
 
 func (r *MonitorRepositoryImpl) UpdateFull(ctx context.Context, id string, monitor *Model) error {
+	if err := r.validateProxyGroup(ctx, monitor.ProxyId); err != nil {
+		return err
+	}
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return err
@@ -391,6 +446,9 @@ func (r *MonitorRepositoryImpl) UpdateFull(ctx context.Context, id string, monit
 	}
 
 	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return err
+	}
 	update := bson.M{}
 
 	if monitor.ProxyId == "" {
@@ -415,6 +473,9 @@ func (r *MonitorRepositoryImpl) UpdatePartial(ctx context.Context, id string, mo
 	unsetProxyId := false
 
 	if monitor.ProxyId != nil {
+		if err := r.validateProxyGroup(ctx, *monitor.ProxyId); err != nil {
+			return err
+		}
 		if *monitor.ProxyId == "" {
 			unsetProxyId = true
 		} else {
@@ -454,6 +515,9 @@ func (r *MonitorRepositoryImpl) UpdatePartial(ctx context.Context, id string, mo
 	}
 
 	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return err
+	}
 	update := bson.M{}
 	if len(set) > 0 {
 		update["$set"] = set
@@ -478,6 +542,9 @@ func (r *MonitorRepositoryImpl) Delete(ctx context.Context, id string) error {
 	}
 
 	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return err
+	}
 	_, err = r.collection.DeleteOne(ctx, filter)
 	return err
 }
@@ -493,6 +560,9 @@ func (r *MonitorRepositoryImpl) FindActive(ctx context.Context) ([]*Model, error
 
 	// Filter for active monitors
 	filter := bson.M{"active": true}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
 
 	cursor, err := r.collection.Find(ctx, filter, options)
 	if err != nil {
@@ -531,6 +601,9 @@ func (r *MonitorRepositoryImpl) FindActivePaginated(ctx context.Context, page in
 
 	// Filter for active monitors
 	filter := bson.M{"active": true}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
 
 	cursor, err := r.collection.Find(ctx, filter, options)
 	if err != nil {
@@ -560,6 +633,9 @@ func (r *MonitorRepositoryImpl) RemoveProxyReference(ctx context.Context, proxyI
 	}
 
 	filter := bson.M{"proxy_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return err
+	}
 	update := bson.M{"$set": bson.M{"proxy_id": ""}}
 	_, err = r.collection.UpdateMany(ctx, filter, update)
 	return err
@@ -575,6 +651,9 @@ func (r *MonitorRepositoryImpl) FindByProxyId(ctx context.Context, proxyId strin
 	}
 
 	filter := bson.M{"proxy_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
 	cursor, err := r.collection.Find(ctx, filter)
 	if err != nil {
 		return nil, err
@@ -624,6 +703,9 @@ func (r *MonitorRepositoryImpl) FindByIDs(ctx context.Context, ids []string) ([]
 
 	// Create filter for the IDs
 	filter := bson.M{"_id": bson.M{"$in": objectIDs}}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
 
 	cursor, err := r.collection.Find(ctx, filter)
 	if err != nil {
@@ -644,4 +726,23 @@ func (r *MonitorRepositoryImpl) FindByIDs(ctx context.Context, ids []string) ([]
 	}
 
 	return monitors, nil
+}
+
+func addGroupScope(ctx context.Context, filter bson.M) error {
+	groupID, scoped, err := auth.MongoGroupIDFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	if scoped {
+		filter["group_id"] = groupID
+	}
+	return nil
+}
+
+func objectIDHex(id primitive.ObjectID) string {
+	if id == primitive.NilObjectID {
+		return ""
+	}
+	return id.Hex()
 }

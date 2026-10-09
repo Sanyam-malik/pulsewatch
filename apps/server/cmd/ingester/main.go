@@ -3,22 +3,22 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/infra"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/certificate"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/events"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/ingester"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_maintenance"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_tls_info"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/notification_sent_history"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/setting"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/stats"
+	"github.com/sanyam-malik/pulsewatch/internal/version"
 	"log"
 	"os"
 	"os/signal"
-	"peekaping/internal"
-	"peekaping/internal/config"
-	"peekaping/internal/infra"
-	"peekaping/internal/modules/certificate"
-	"peekaping/internal/modules/events"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/ingester"
-	"peekaping/internal/modules/monitor_maintenance"
-	"peekaping/internal/modules/monitor_tls_info"
-	"peekaping/internal/modules/notification_sent_history"
-	"peekaping/internal/modules/setting"
-	"peekaping/internal/modules/stats"
-	"peekaping/internal/version"
 	"syscall"
 
 	"github.com/hibiken/asynq"
@@ -27,7 +27,7 @@ import (
 )
 
 func main() {
-	log.Printf("Starting Peekaping Ingester v%s", version.Version)
+	log.Printf("Starting Pulsewatch Ingester v%s", version.Version)
 
 	// Load and validate Ingester-specific config
 	cfg, err := LoadAndValidate("../..")

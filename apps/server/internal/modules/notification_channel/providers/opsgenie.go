@@ -5,12 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/version"
 	"net/http"
 	"net/url"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/modules/shared"
-	"peekaping/internal/version"
 	"time"
 
 	"go.uber.org/zap"
@@ -86,7 +86,7 @@ func (o *OpsgenieSender) Send(
 	cfg := cfgAny.(*OpsgenieConfig)
 
 	baseURL := o.getOpsgenieURL(cfg.Region)
-	textMsg := "Peekaping Alert"
+	textMsg := "Pulsewatch Alert"
 
 	// Handle test notification (when heartbeat is nil)
 	if heartbeat == nil {
@@ -109,8 +109,8 @@ func (o *OpsgenieSender) Send(
 func (o *OpsgenieSender) sendTestNotification(ctx context.Context, cfg *OpsgenieConfig, baseURL, message string) error {
 	data := map[string]any{
 		"message":  message,
-		"alias":    "peekaping-notification-test",
-		"source":   "Peekaping",
+		"alias":    "pulsewatch-notification-test",
+		"source":   "Pulsewatch",
 		"priority": "P5",
 	}
 
@@ -128,7 +128,7 @@ func (o *OpsgenieSender) sendDownAlert(ctx context.Context, cfg *OpsgenieConfig,
 		"message":     fmt.Sprintf("%s: %s", textMsg, monitorName),
 		"alias":       monitorName,
 		"description": message,
-		"source":      "Peekaping",
+		"source":      "Pulsewatch",
 		"priority":    o.getPriority(fmt.Sprintf("%d", cfg.Priority)),
 	}
 
@@ -145,7 +145,7 @@ func (o *OpsgenieSender) sendUpAlert(ctx context.Context, cfg *OpsgenieConfig, b
 	closeURL := fmt.Sprintf("%s/%s/close?identifierType=alias", baseURL, url.QueryEscape(monitor.Name))
 
 	data := map[string]any{
-		"source": "Peekaping",
+		"source": "Pulsewatch",
 	}
 
 	return o.postToOpsgenie(ctx, cfg, closeURL, data)
@@ -166,7 +166,7 @@ func (o *OpsgenieSender) postToOpsgenie(ctx context.Context, cfg *OpsgenieConfig
 	// Set headers
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("GenieKey %s", cfg.ApiKey))
-	req.Header.Set("User-Agent", "Peekaping-Opsgenie/"+version.Version)
+	req.Header.Set("User-Agent", "Pulsewatch-Opsgenie/"+version.Version)
 
 	o.logger.Debugf("Sending Opsgenie request to: %s", url)
 	o.logger.Debugf("Request body: %s", string(jsonData))

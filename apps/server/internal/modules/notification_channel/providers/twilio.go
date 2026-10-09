@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
 	"net/http"
 	"net/url"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
 	"strings"
 
 	"go.uber.org/zap"

@@ -3,10 +3,10 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/cmd/bun/migrations"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
 	"log"
 	"os"
-	"peekaping/cmd/bun/migrations"
-	"peekaping/internal/config"
 	"strings"
 
 	"github.com/uptrace/bun"

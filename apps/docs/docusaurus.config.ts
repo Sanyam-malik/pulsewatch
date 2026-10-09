@@ -5,9 +5,9 @@ import type * as Preset from "@docusaurus/preset-classic";
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: "Peekaping Docs",
-  tagline: "Peekaping is a monitoring tool for your servers",
-  favicon: "img/favicon.ico",
+  title: "Pulsewatch Docs",
+  tagline: "Documentation for the Pulsewatch monitoring fork",
+  favicon: "img/pulsewatch.svg",
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -15,15 +15,15 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: "https://docs.peekaping.com",
+  url: "https://sanyam-malik.github.io",
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: "/",
+  baseUrl: "/pulsewatch/docs/",
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: "0xfurai", // Usually your GitHub org/user name.
-  projectName: "peekaping", // Usually your repo name.
+  organizationName: "Sanyam-malik", // Usually your GitHub org/user name.
+  projectName: "pulsewatch", // Usually your repo name.
 
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
@@ -44,15 +44,11 @@ const config: Config = {
           routeBasePath: "/",
           sidebarPath: "./sidebars.ts",
           // Remove this to remove the "edit this page" links.
-          editUrl: "https://github.com/0xfurai/peekaping/tree/main/apps/docs",
+          editUrl: "https://github.com/Sanyam-malik/pulsewatch/tree/main/apps/docs",
         },
         blog: false,
         theme: {
           customCss: "./src/css/custom.css",
-        },
-        gtag: {
-          trackingID: "G-DRM5LCBFK6",
-          anonymizeIP: true,
         },
       } satisfies Preset.Options,
     ],
@@ -62,9 +58,9 @@ const config: Config = {
     // Replace with your project's social card
     // image: "img/docusaurus-social-card.jpg",
     navbar: {
-      title: "Peekaping",
+      title: "Pulsewatch",
       // logo: {
-      //   alt: 'Peekaping Docs Logo',
+      //   alt: 'Pulsewatch Docs Logo',
       //   src: 'img/logo.svg',
       // },
       items: [
@@ -75,7 +71,7 @@ const config: Config = {
           label: "Docs",
         },
         {
-          href: "https://github.com/0xfurai/peekaping",
+          href: "https://github.com/Sanyam-malik/pulsewatch",
           label: "GitHub",
           position: "right",
         },
@@ -98,7 +94,7 @@ const config: Config = {
           items: [
             {
               label: "GitHub",
-              href: "https://github.com/0xfurai/peekaping",
+              href: "https://github.com/Sanyam-malik/pulsewatch",
             },
           ],
         },

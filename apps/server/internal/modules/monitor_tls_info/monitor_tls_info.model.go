@@ -1,7 +1,7 @@
 package monitor_tls_info
 
 import (
-	"peekaping/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 	"time"
 )
 

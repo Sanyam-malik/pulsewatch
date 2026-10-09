@@ -9,13 +9,54 @@ import { proxiesDefaultValues, proxiesSchema } from "../shared/proxies";
 import { tagsDefaultValues, tagsSchema } from "../shared/tags";
 import type { MonitorMonitorResponseDto, MonitorCreateUpdateDto } from "@/api";
 
+export const httpConditionSchema = z.object({
+  type: z.enum(["status", "response_time", "json"]),
+  json_query: z.string().optional(),
+  operator: z.enum(["==", "!=", ">", "<", ">=", "<=", "exists", "not_exists"]),
+  expected_value: z.string().optional(),
+}).superRefine((condition, context) => {
+  if (condition.type === "json" && !condition.json_query && condition.operator !== "==" && condition.operator !== "!=") {
+    context.addIssue({
+      code: "custom",
+      path: ["json_query"],
+      message: "A JSON path is required for this operator",
+    });
+  }
+  if (condition.type === "json" && (condition.operator === "exists" || condition.operator === "not_exists") && !condition.json_query) {
+    context.addIssue({
+      code: "custom",
+      path: ["json_query"],
+      message: "A JSON path is required for existence checks",
+    });
+  }
+  if (condition.type === "status") {
+    const statusCode = Number(condition.expected_value);
+    if (!Number.isInteger(statusCode) || statusCode < 100 || statusCode > 599) {
+      context.addIssue({
+        code: "custom",
+        path: ["expected_value"],
+        message: "Enter an HTTP status from 100 to 599",
+      });
+    }
+  }
+  if (condition.type === "response_time") {
+    const responseTime = Number(condition.expected_value);
+    if (!Number.isFinite(responseTime) || responseTime < 0) {
+      context.addIssue({
+        code: "custom",
+        path: ["expected_value"],
+        message: "Enter a non-negative response time in milliseconds",
+      });
+    }
+  }
+});
+
 export const httpJsonQuerySchema = z
   .object({
     type: z.literal("http-json-query"),
     url: z.string().url({ message: "Invalid URL" }),
-    json_query: z.string().optional(),
-    json_condition: z.enum(["==", "!=", ">", "<", ">=", "<="]).optional(),
-    expected_value: z.string().optional(),
+    condition_operator: z.enum(["and", "or"]).optional(),
+    conditions: z.array(httpConditionSchema).max(20).optional(),
   })
   .merge(generalSchema)
   .merge(intervalsSchema)
@@ -39,9 +80,8 @@ export type HttpJsonQueryForm = z.infer<typeof httpJsonQuerySchema>;
 export const httpJsonQueryDefaultValues: HttpJsonQueryForm = {
   type: "http-json-query",
   url: "https://example.com",
-  json_query: "",
-  json_condition: "==",
-  expected_value: "",
+  condition_operator: "and",
+  conditions: [],
 
   ...generalDefaultValues,
   ...intervalsDefaultValues,
@@ -53,6 +93,13 @@ export const httpJsonQueryDefaultValues: HttpJsonQueryForm = {
   httpOptions: httpOptionsDefaultValues,
   authentication: authenticationDefaultValues,
 };
+
+export interface HttpConditionConfig {
+  type: "status" | "response_time" | "json";
+  json_query?: string;
+  operator: "==" | "!=" | ">" | "<" | ">=" | "<=" | "exists" | "not_exists";
+  expected_value?: string;
+}
 
 export const deserialize = (data: MonitorMonitorResponseDto): HttpJsonQueryForm => {
   let config: Partial<HttpJsonQueryExecutorConfig> = {};
@@ -110,6 +157,18 @@ export const deserialize = (data: MonitorMonitorResponseDto): HttpJsonQueryForm 
       };
   }
 
+  const conditions: HttpJsonQueryForm["conditions"] = Array.isArray(config.conditions)
+    ? config.conditions
+    : [];
+  if (conditions.length === 0 && (config.json_query || config.expected_value)) {
+    conditions.push({
+      type: "json",
+      json_query: config.json_query || "",
+      operator: config.json_condition || (config.json_query ? "exists" : "=="),
+      expected_value: config.expected_value || "",
+    });
+  }
+
   return {
     type: "http-json-query",
     name: data.name || "My Monitor",
@@ -133,9 +192,8 @@ export const deserialize = (data: MonitorMonitorResponseDto): HttpJsonQueryForm 
     },
     authentication,
     check_cert_expiry: config.check_cert_expiry ?? false,
-    json_query: config.json_query || "",
-    json_condition: (config.json_condition as "==" | "!=" | ">" | "<" | ">=" | "<=") || "==",
-    expected_value: config.expected_value || "",
+    condition_operator: config.condition_operator === "or" ? "or" : "and",
+    conditions,
   };
 };
 
@@ -152,10 +210,10 @@ export const serialize = (formData: HttpJsonQueryForm): MonitorCreateUpdateDto =
     authMethod: formData.authentication.authMethod,
     check_cert_expiry: formData.check_cert_expiry,
 
-    // JSON query validation fields
-    json_query: formData.json_query || "",
-    json_condition: formData.json_condition,
-    expected_value: formData.expected_value || "",
+    ...(formData.conditions?.length && {
+      condition_operator: formData.condition_operator || "and",
+      conditions: formData.conditions,
+    }),
 
     // Include authentication fields based on method
     ...(formData.authentication.authMethod === "basic" && {
@@ -207,10 +265,12 @@ export interface HttpJsonQueryExecutorConfig {
   max_redirects?: number;
   ignore_tls_errors: boolean;
 
-  // JSON query validation fields
+  // Legacy single JSON condition fields remain readable for saved monitors.
   json_query?: string;
   json_condition?: "==" | "!=" | ">" | "<" | ">=" | "<=";
   expected_value?: string;
+  condition_operator?: "and" | "or";
+  conditions?: Array<HttpConditionConfig>;
 
   // Authentication fields
   authMethod: "none" | "basic" | "oauth2-cc" | "ntlm" | "mtls";

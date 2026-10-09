@@ -1,7 +1,7 @@
 package queue
 
 import (
-	"peekaping/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
 
 	"go.uber.org/dig"
 )

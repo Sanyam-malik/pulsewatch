@@ -5,12 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/version"
 	"net/http"
-	"peekaping/internal/config"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/modules/shared"
-	"peekaping/internal/version"
 	"strings"
 
 	"go.uber.org/zap"
@@ -114,20 +114,20 @@ func (p *PagerDutySender) getEventAction(heartbeat *heartbeat.Model, cfg *PagerD
 // getTitle generates the title for the PagerDuty alert
 func (p *PagerDutySender) getTitle(heartbeat *heartbeat.Model) string {
 	if heartbeat == nil {
-		return "Peekaping Alert"
+		return "Pulsewatch Alert"
 	}
 
 	switch heartbeat.Status {
 	case shared.MonitorStatusUp:
-		return "Peekaping Monitor ✅ Up"
+		return "Pulsewatch Monitor ✅ Up"
 	case shared.MonitorStatusDown:
-		return "Peekaping Monitor 🔴 Down"
+		return "Pulsewatch Monitor 🔴 Down"
 	case shared.MonitorStatusPending:
-		return "Peekaping Monitor ⏳ Pending"
+		return "Pulsewatch Monitor ⏳ Pending"
 	case shared.MonitorStatusMaintenance:
-		return "Peekaping Monitor 🔧 Maintenance"
+		return "Pulsewatch Monitor 🔧 Maintenance"
 	default:
-		return "Peekaping Alert"
+		return "Pulsewatch Alert"
 	}
 }
 
@@ -183,12 +183,12 @@ func (p *PagerDutySender) Send(
 		},
 		"routing_key":  cfg.IntegrationKey,
 		"event_action": eventAction,
-		"dedup_key":    fmt.Sprintf("Peekaping/%s", monitor.ID),
+		"dedup_key":    fmt.Sprintf("Pulsewatch/%s", monitor.ID),
 	}
 
 	// Add client information if base URL is available
 	if p.config.ClientURL != "" && monitor != nil {
-		payload["client"] = "Peekaping"
+		payload["client"] = "Pulsewatch"
 		payload["client_url"] = fmt.Sprintf("%s/monitors/%s", strings.TrimRight(p.config.ClientURL, "/"), monitor.ID)
 	}
 
@@ -207,7 +207,7 @@ func (p *PagerDutySender) Send(
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "Peekaping-PagerDuty/"+version.Version)
+	req.Header.Set("User-Agent", "Pulsewatch-PagerDuty/"+version.Version)
 
 	p.logger.Debugf("Sending PagerDuty request: %s", req.URL.String())
 

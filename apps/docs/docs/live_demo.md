@@ -1,15 +1,15 @@
 ---
 sidebar_position: 2
 ---
-# Live Demo
+# Upstream Live Demo
 
-Try Peekaping with our interactive demo environment.
+This demo is hosted by the upstream Peekaping project and does not run Pulsewatch.
 
 ## ⚠️ **Sign Up Required**
 
 **You need to create an account with your own credentials to access the demo.**
 
-**[👉 Open Live Demo](https://demo.peekaping.com)**
+**[👉 Open the upstream live demo](https://demo.peekaping.com)**
 
 ## ⏱️ Demo Details
 
@@ -26,4 +26,4 @@ Try Peekaping with our interactive demo environment.
 
 ---
 
-**Ready to try?** [Start your demo session](https://demo.peekaping.com) 🎉
+**Ready to try?** [Start an upstream demo session](https://demo.peekaping.com) 🎉

@@ -5,9 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
 	"net/http"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
 	"time"
 
 	liquid "github.com/osteele/liquid"
@@ -125,7 +125,7 @@ func (s *PushbulletSender) Send(
 // buildTitle creates the notification title
 func (s *PushbulletSender) buildTitle(m *monitor.Model, heartbeat *heartbeat.Model) string {
 	if m == nil {
-		return "[PeekaPing] Alert"
+		return "[Pulsewatch] Alert"
 	}
 
 	status := "UNKNOWN"
@@ -142,7 +142,7 @@ func (s *PushbulletSender) buildTitle(m *monitor.Model, heartbeat *heartbeat.Mod
 		}
 	}
 
-	return fmt.Sprintf("[PeekaPing] %s is %s", m.Name, status)
+	return fmt.Sprintf("[Pulsewatch] %s is %s", m.Name, status)
 }
 
 // buildBody creates the notification body

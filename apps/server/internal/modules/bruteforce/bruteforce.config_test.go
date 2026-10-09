@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"peekaping/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"

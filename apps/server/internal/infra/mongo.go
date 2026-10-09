@@ -3,7 +3,7 @@ package infra
 import (
 	"context"
 	"fmt"
-	"peekaping/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
 
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo"

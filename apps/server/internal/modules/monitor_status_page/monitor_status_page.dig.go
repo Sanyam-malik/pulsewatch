@@ -1,8 +1,8 @@
 package monitor_status_page
 
 import (
-	"peekaping/internal/config"
-	"peekaping/internal/utils"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
 
 	"go.uber.org/dig"
 )

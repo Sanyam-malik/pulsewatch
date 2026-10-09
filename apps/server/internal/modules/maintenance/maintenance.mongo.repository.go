@@ -3,7 +3,8 @@ package maintenance
 import (
 	"context"
 	"fmt"
-	"peekaping/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -30,6 +31,7 @@ type mongoModel struct {
 	Duration      *int               `bson:"duration,omitempty"`
 	CreatedAt     time.Time          `bson:"created_at"`
 	UpdatedAt     time.Time          `bson:"updated_at"`
+	GroupID       primitive.ObjectID `bson:"group_id,omitempty"`
 }
 
 type mongoUpdateModel struct {
@@ -93,6 +95,10 @@ func NewMongoRepository(client *mongo.Client, cfg *config.Config) Repository {
 }
 
 func (r *MongoRepositoryImpl) Create(ctx context.Context, entity *CreateUpdateDto) (*Model, error) {
+	groupID, _, err := auth.MongoGroupIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	mm := &mongoModel{
 		ID:            primitive.NewObjectID(),
 		Title:         entity.Title,
@@ -109,9 +115,10 @@ func (r *MongoRepositoryImpl) Create(ctx context.Context, entity *CreateUpdateDt
 		Duration:      entity.Duration,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
+		GroupID:       groupID,
 	}
 
-	_, err := r.collection.InsertOne(ctx, mm)
+	_, err = r.collection.InsertOne(ctx, mm)
 	if err != nil {
 		return nil, err
 	}
@@ -126,6 +133,9 @@ func (r *MongoRepositoryImpl) FindByID(ctx context.Context, id string) (*Model, 
 	}
 
 	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
 	var mm mongoModel
 	err = r.collection.FindOne(ctx, filter).Decode(&mm)
 	if err != nil {
@@ -152,6 +162,9 @@ func (r *MongoRepositoryImpl) FindAll(ctx context.Context, page int, limit int, 
 	}
 
 	filter := bson.M{}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
 	if q != "" {
 		filter["$or"] = bson.A{
 			bson.M{"title": bson.M{"$regex": q, "$options": "i"}},
@@ -210,6 +223,9 @@ func (r *MongoRepositoryImpl) UpdateFull(ctx context.Context, id string, entity 
 	}
 
 	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
 	update := bson.M{"$set": mm}
 
 	_, err = r.collection.UpdateOne(ctx, filter, update)
@@ -248,6 +264,9 @@ func (r *MongoRepositoryImpl) UpdatePartial(ctx context.Context, id string, enti
 	}
 
 	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
 	updateDoc := bson.M{"$set": update}
 
 	_, err = r.collection.UpdateOne(ctx, filter, updateDoc)
@@ -272,6 +291,9 @@ func (r *MongoRepositoryImpl) Delete(ctx context.Context, id string) error {
 	}
 
 	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return err
+	}
 	_, err = r.collection.DeleteOne(ctx, filter)
 	return err
 }
@@ -284,7 +306,11 @@ func (r *MongoRepositoryImpl) SetActive(ctx context.Context, id string, active b
 	fmt.Println("Setting active to", active)
 	now := time.Now().UTC().Format(time.RFC3339)
 	update := bson.M{"$set": bson.M{"active": active, "updated_at": now}}
-	_, err = r.collection.UpdateOne(ctx, bson.M{"_id": objectID}, update)
+	filter := bson.M{"_id": objectID}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
+	_, err = r.collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return nil, err
 	}
@@ -322,6 +348,9 @@ func (r *MongoRepositoryImpl) GetMaintenancesByMonitorID(ctx context.Context, mo
 	}
 	// Now fetch all active maintenances with these IDs
 	filter := bson.M{"_id": bson.M{"$in": maintenanceIDs}, "active": true}
+	if err := addGroupScope(ctx, filter); err != nil {
+		return nil, err
+	}
 	cursor2, err := r.collection.Find(ctx, filter)
 	if err != nil {
 		return nil, err
@@ -336,4 +365,15 @@ func (r *MongoRepositoryImpl) GetMaintenancesByMonitorID(ctx context.Context, mo
 		maintenances = append(maintenances, toDomainModel(&mm))
 	}
 	return maintenances, nil
+}
+
+func addGroupScope(ctx context.Context, filter bson.M) error {
+	groupID, scoped, err := auth.MongoGroupIDFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	if scoped {
+		filter["group_id"] = groupID
+	}
+	return nil
 }

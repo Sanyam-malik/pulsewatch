@@ -1,8 +1,8 @@
 package api_key
 
 import (
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
 	"net/http"
-	"peekaping/internal/utils"
 	"time"
 
 	"github.com/gin-gonic/gin"

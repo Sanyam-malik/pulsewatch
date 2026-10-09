@@ -3,49 +3,51 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/docs"
+	"github.com/sanyam-malik/pulsewatch/internal"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/infra"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/api_key"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/badge"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/bruteforce"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/certificate"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/cleanup"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/domain_status_page"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/events"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/healthcheck"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/incident"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/maintenance"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/middleware"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_group"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_maintenance"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_notification"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_status_page"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_tag"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_tls_info"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/notification_channel"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/notification_sent_history"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/proxy"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/queue"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/setting"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/stats"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/status_page"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/tag"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/websocket"
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
+	"github.com/sanyam-malik/pulsewatch/internal/version"
 	"log"
 	"os"
 	"os/signal"
-	"peekaping/docs"
-	"peekaping/internal"
-	"peekaping/internal/config"
-	"peekaping/internal/infra"
-	"peekaping/internal/modules/api_key"
-	"peekaping/internal/modules/auth"
-	"peekaping/internal/modules/badge"
-	"peekaping/internal/modules/bruteforce"
-	"peekaping/internal/modules/certificate"
-	"peekaping/internal/modules/cleanup"
-	"peekaping/internal/modules/domain_status_page"
-	"peekaping/internal/modules/events"
-	"peekaping/internal/modules/healthcheck"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/maintenance"
-	"peekaping/internal/modules/middleware"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/modules/monitor_maintenance"
-	"peekaping/internal/modules/monitor_notification"
-	"peekaping/internal/modules/monitor_status_page"
-	"peekaping/internal/modules/monitor_tag"
-	"peekaping/internal/modules/monitor_tls_info"
-	"peekaping/internal/modules/notification_channel"
-	"peekaping/internal/modules/notification_sent_history"
-	"peekaping/internal/modules/proxy"
-	"peekaping/internal/modules/queue"
-	"peekaping/internal/modules/setting"
-	"peekaping/internal/modules/stats"
-	"peekaping/internal/modules/status_page"
-	"peekaping/internal/modules/tag"
-	"peekaping/internal/modules/websocket"
-	"peekaping/internal/utils"
-	"peekaping/internal/version"
 	"syscall"
 
 	"go.uber.org/dig"
 	"go.uber.org/zap"
 )
 
-// @title			Peekaping API
+// @title			Pulsewatch API
 // @BasePath	/api/v1
 // @securityDefinitions.apikey JwtAuth
 // @in header
@@ -101,6 +103,8 @@ func main() {
 	// Register dependencies in the correct order to handle circular dependencies
 	heartbeat.RegisterDependencies(container, internalCfg)
 	monitor.RegisterDependencies(container, internalCfg)
+	monitor_group.RegisterDependencies(container, internalCfg)
+	incident.RegisterDependencies(container, internalCfg)
 	healthcheck.RegisterDependencies(container)
 	bruteforce.RegisterDependencies(container, internalCfg)
 	auth.RegisterDependencies(container, internalCfg)

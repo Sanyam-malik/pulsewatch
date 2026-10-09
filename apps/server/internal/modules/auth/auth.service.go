@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
+
 	"github.com/pquerna/otp/totp"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -15,6 +17,12 @@ type Service interface {
 	Login(ctx context.Context, dto LoginDto) (*LoginResponse, error)
 	RefreshToken(ctx context.Context, refreshToken string) (*LoginResponse, error)
 	UpdatePassword(ctx context.Context, userId string, dto UpdatePasswordDto) error
+	ListGroups(ctx context.Context, userID string) ([]Group, error)
+	CreateGroup(ctx context.Context, userID string, dto CreateGroupDto) (*Group, error)
+	ListMembers(ctx context.Context, actorID, groupID string) ([]GroupMember, error)
+	AddMember(ctx context.Context, actorID, groupID string, dto AddMemberDto) (*GroupMember, error)
+	UpdateMemberRole(ctx context.Context, actorID, groupID, userID string, dto UpdateMemberRoleDto) error
+	RemoveMember(ctx context.Context, actorID, groupID, userID string) error
 
 	// 2FA methods
 	SetupTwoFA(ctx context.Context, userId, password string) (secret string, provisioningURI string, err error)
@@ -49,12 +57,6 @@ func (s *ServiceImpl) Register(ctx context.Context, dto RegisterDto) (*LoginResp
 	if count > 0 {
 		return nil, errors.New("admin already exists")
 	}
-	// Check if admin with this email already exists
-	existingAdmin, err := s.repo.FindByEmail(ctx, dto.Email)
-	if err == nil && existingAdmin != nil {
-		return nil, errors.New("admin with this email already exists")
-	}
-
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(dto.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -71,19 +73,21 @@ func (s *ServiceImpl) Register(ctx context.Context, dto RegisterDto) (*LoginResp
 	}
 
 	// Save to database
-	user, err = s.repo.Create(ctx, user)
+	user, group, err := s.repo.CreateFirstOwner(ctx, user, "Default group")
 	if err != nil {
 		return nil, err
 	}
+	membership := &Membership{GroupID: group.ID, UserID: user.ID, Role: RoleOwner}
+	user.GroupID, user.Role = membership.GroupID, membership.Role
 
 	// Generate access token
-	accessToken, err := s.tokenMaker.CreateAccessToken(ctx, user)
+	accessToken, err := s.tokenMaker.CreateAccessToken(ctx, user, membership)
 	if err != nil {
 		return nil, err
 	}
 
 	// Generate refresh token
-	refreshToken, err := s.tokenMaker.CreateRefreshToken(ctx, user)
+	refreshToken, err := s.tokenMaker.CreateRefreshToken(ctx, user, membership)
 	if err != nil {
 		return nil, err
 	}
@@ -104,6 +108,9 @@ func (s *ServiceImpl) Login(ctx context.Context, dto LoginDto) (*LoginResponse, 
 	if user == nil {
 		return nil, errors.New("invalid credentials")
 	}
+	if !user.Active {
+		return nil, errors.New("account is disabled")
+	}
 
 	// Verify password
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(dto.Password))
@@ -122,13 +129,21 @@ func (s *ServiceImpl) Login(ctx context.Context, dto LoginDto) (*LoginResponse, 
 	}
 
 	// Generate access token
-	accessToken, err := s.tokenMaker.CreateAccessToken(ctx, user)
+	membership, err := s.repo.ResolveMembership(ctx, user.ID, "")
+	if err != nil {
+		return nil, err
+	}
+	if membership == nil {
+		return nil, errors.New("account is not a member of a group")
+	}
+	user.GroupID, user.Role = membership.GroupID, membership.Role
+	accessToken, err := s.tokenMaker.CreateAccessToken(ctx, user, membership)
 	if err != nil {
 		return nil, err
 	}
 
 	// Generate refresh token
-	refreshToken, err := s.tokenMaker.CreateRefreshToken(ctx, user)
+	refreshToken, err := s.tokenMaker.CreateRefreshToken(ctx, user, membership)
 	if err != nil {
 		return nil, err
 	}
@@ -157,15 +172,29 @@ func (s *ServiceImpl) RefreshToken(ctx context.Context, refreshToken string) (*L
 	if err != nil || user == nil {
 		return nil, errors.New("user not found")
 	}
+	if !user.Active {
+		return nil, errors.New("account is disabled")
+	}
+	membership, err := s.repo.ResolveMembership(ctx, user.ID, claims.GroupID)
+	if err != nil {
+		return nil, err
+	}
+	if membership == nil {
+		membership, err = s.repo.ResolveMembership(ctx, user.ID, "")
+		if err != nil || membership == nil {
+			return nil, errors.New("group membership not found")
+		}
+	}
+	user.GroupID, user.Role = membership.GroupID, membership.Role
 
 	// Generate new access token
-	accessToken, err := s.tokenMaker.CreateAccessToken(ctx, user)
+	accessToken, err := s.tokenMaker.CreateAccessToken(ctx, user, membership)
 	if err != nil {
 		return nil, err
 	}
 
 	// Generate new refresh token
-	newRefreshToken, err := s.tokenMaker.CreateRefreshToken(ctx, user)
+	newRefreshToken, err := s.tokenMaker.CreateRefreshToken(ctx, user, membership)
 	if err != nil {
 		return nil, err
 	}
@@ -175,6 +204,124 @@ func (s *ServiceImpl) RefreshToken(ctx context.Context, refreshToken string) (*L
 		RefreshToken: newRefreshToken,
 		AccessToken:  accessToken,
 	}, nil
+}
+
+func (s *ServiceImpl) ListGroups(ctx context.Context, userID string) ([]Group, error) {
+	return s.repo.ListGroups(ctx, userID)
+}
+
+func (s *ServiceImpl) CreateGroup(ctx context.Context, userID string, dto CreateGroupDto) (*Group, error) {
+	return s.repo.CreateGroup(ctx, userID, dto.Name)
+}
+
+func (s *ServiceImpl) requireManager(ctx context.Context, actorID, groupID string) error {
+	membership, err := s.repo.ResolveMembership(ctx, actorID, groupID)
+	if err != nil {
+		return err
+	}
+	if membership == nil || (membership.Role != RoleOwner && membership.Role != RoleAdmin) {
+		return errors.New("group administrator access required")
+	}
+	return nil
+}
+
+func (s *ServiceImpl) ListMembers(ctx context.Context, actorID, groupID string) ([]GroupMember, error) {
+	if err := s.requireManager(ctx, actorID, groupID); err != nil {
+		return nil, err
+	}
+	return s.repo.ListMembers(ctx, groupID)
+}
+
+func (s *ServiceImpl) AddMember(ctx context.Context, actorID, groupID string, dto AddMemberDto) (*GroupMember, error) {
+	actor, err := s.repo.ResolveMembership(ctx, actorID, groupID)
+	if err != nil {
+		return nil, err
+	}
+	if actor == nil || (actor.Role != RoleOwner && actor.Role != RoleAdmin) {
+		return nil, errors.New("group administrator access required")
+	}
+	if dto.Role == RoleAdmin && actor.Role != RoleOwner {
+		return nil, errors.New("only a group owner can grant administrator access")
+	}
+	user, err := s.repo.FindByEmail(ctx, dto.Email)
+	if err != nil {
+		return nil, err
+	}
+	password := ""
+	if user == nil {
+		if err := utils.Validate.Var(dto.Password, "required,password"); err != nil {
+			return nil, errors.New("password must be at least 8 characters long and contain uppercase, lowercase, number, and special character")
+		}
+		hashedPassword, hashErr := bcrypt.GenerateFromPassword([]byte(dto.Password), bcrypt.DefaultCost)
+		if hashErr != nil {
+			return nil, hashErr
+		}
+		password = string(hashedPassword)
+	}
+	return s.repo.AddMember(ctx, groupID, dto.Email, password, dto.Role)
+}
+
+func (s *ServiceImpl) UpdateMemberRole(ctx context.Context, actorID, groupID, userID string, dto UpdateMemberRoleDto) error {
+	actor, err := s.repo.ResolveMembership(ctx, actorID, groupID)
+	if err != nil {
+		return err
+	}
+	if actor == nil || (actor.Role != RoleOwner && actor.Role != RoleAdmin) {
+		return errors.New("group administrator access required")
+	}
+	target, err := s.repo.ResolveMembership(ctx, userID, groupID)
+	if err != nil {
+		return err
+	}
+	if target == nil {
+		return errors.New("group membership not found")
+	}
+	if actor.Role != RoleOwner && target.Role == RoleOwner {
+		return errors.New("only a group owner can change another owner's access")
+	}
+	if actorID == userID && target.Role == RoleOwner {
+		return errors.New("an owner cannot change their own role")
+	}
+	if dto.Role == RoleOwner {
+		return errors.New("owner role cannot be assigned directly")
+	}
+	if actor.Role != RoleOwner && dto.Role == RoleAdmin {
+		return errors.New("only a group owner can grant administrator access")
+	}
+	if !validRole(dto.Role) {
+		return errors.New("invalid role")
+	}
+	if err := s.requireManager(ctx, actorID, groupID); err != nil {
+		return err
+	}
+	return s.repo.UpdateMemberRole(ctx, groupID, userID, dto.Role)
+}
+
+func (s *ServiceImpl) RemoveMember(ctx context.Context, actorID, groupID, userID string) error {
+	actor, err := s.repo.ResolveMembership(ctx, actorID, groupID)
+	if err != nil {
+		return err
+	}
+	target, err := s.repo.ResolveMembership(ctx, userID, groupID)
+	if err != nil {
+		return err
+	}
+	if actor == nil || (actor.Role != RoleOwner && actor.Role != RoleAdmin) {
+		return errors.New("group administrator access required")
+	}
+	if target == nil {
+		return errors.New("group membership not found")
+	}
+	if actor.Role != RoleOwner && target.Role == RoleOwner {
+		return errors.New("only a group owner can remove another owner")
+	}
+	if actorID == userID && target.Role == RoleOwner {
+		return errors.New("an owner cannot remove their own membership")
+	}
+	if err := s.requireManager(ctx, actorID, groupID); err != nil {
+		return err
+	}
+	return s.repo.RemoveMember(ctx, groupID, userID)
 }
 
 func (s *ServiceImpl) UpdatePassword(ctx context.Context, userId string, dto UpdatePasswordDto) error {
@@ -225,7 +372,7 @@ func (s *ServiceImpl) SetupTwoFA(ctx context.Context, userId, password string) (
 	if user.TwoFASecret == "" {
 		// Generate new secret and provisioning URI
 		key, err := totp.Generate(totp.GenerateOpts{
-			Issuer:      "peekaping",
+			Issuer:      "Pulsewatch",
 			AccountName: user.Email,
 		})
 		if err != nil {
@@ -245,7 +392,7 @@ func (s *ServiceImpl) SetupTwoFA(ctx context.Context, userId, password string) (
 		secretStr = user.TwoFASecret
 		// Recreate the provisioning URI
 		key, err := totp.Generate(totp.GenerateOpts{
-			Issuer:      "peekaping",
+			Issuer:      "Pulsewatch",
 			AccountName: user.Email,
 			Secret:      []byte(user.TwoFASecret),
 		})

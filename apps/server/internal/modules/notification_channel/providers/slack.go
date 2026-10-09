@@ -5,13 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/version"
 	"net/http"
 	"net/url"
-	"peekaping/internal/config"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/modules/shared"
-	"peekaping/internal/version"
 	"strings"
 
 	liquid "github.com/osteele/liquid"
@@ -75,9 +75,9 @@ func (s *SlackSender) buildActions(baseURL string, monitor *monitor.Model) []map
 			"type": "button",
 			"text": map[string]any{
 				"type": "plain_text",
-				"text": "Visit Peekaping",
+				"text": "Visit Pulsewatch",
 			},
-			"value": "Peekaping",
+			"value": "Pulsewatch",
 			"url":   monitorURL,
 		})
 	}
@@ -227,7 +227,7 @@ func (s *SlackSender) Send(
 
 	// Handle rich message format
 	if cfg.RichMessage && heartbeat != nil {
-		title := "Peekaping Alert"
+		title := "Pulsewatch Alert"
 
 		// Use blocks for modern Slack message format
 		blocks := s.buildBlocks(s.config.ClientURL, monitor, heartbeat, title, messageText)
@@ -256,7 +256,7 @@ func (s *SlackSender) Send(
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "Peekaping-Slack/"+version.Version)
+	req.Header.Set("User-Agent", "Pulsewatch-Slack/"+version.Version)
 
 	s.logger.Debugf("Sending Slack webhook request: %s", req.URL.String())
 

@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"peekaping/internal/modules/queue"
-	"peekaping/internal/modules/shared"
-	"peekaping/internal/modules/worker"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/queue"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/worker"
 )
 
 // claimDueMonitors atomically claims a batch of due monitors from the due queue

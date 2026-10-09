@@ -2,7 +2,7 @@ package internal
 
 import (
 	"fmt"
-	"peekaping/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
 	"strings"
 
 	"go.uber.org/zap"

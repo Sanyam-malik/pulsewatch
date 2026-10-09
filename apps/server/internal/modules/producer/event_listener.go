@@ -3,8 +3,8 @@ package producer
 import (
 	"context"
 	"encoding/json"
-	"peekaping/internal/modules/events"
-	"peekaping/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/events"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
 
 	"go.uber.org/zap"
 )

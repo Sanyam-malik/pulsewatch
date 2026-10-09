@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Producer
 
-The Producer is the scheduling component of Peekaping, responsible for determining when monitors should be checked and enqueueing health check tasks for workers to execute.
+The Producer is the scheduling component of Pulsewatch, responsible for determining when monitors should be checked and enqueueing health check tasks for workers to execute.
 
 ## Role & Responsibilities
 
@@ -84,7 +84,7 @@ The producer runs multiple concurrent goroutines:
 | `MODE` | string | Yes | `dev` | Runtime mode: `dev`, `prod`, or `test` |
 | `LOG_LEVEL` | string | No | `debug` | Logging level: `debug`, `info`, `warn`, `error` |
 | `TZ` | string | Yes | `UTC` | Timezone for the producer |
-| `SERVICE_NAME` | string | Yes | `peekaping:producer` | Service identifier for logging |
+| `SERVICE_NAME` | string | Yes | `pulsewatch:producer` | Service identifier for logging |
 
 
 ## Leader Election
@@ -171,4 +171,3 @@ Run multiple producer instances for high availability and load distribution.
 - [API Server](./api-server.md) - Manages monitor configurations
 - [Worker](./worker.md) - Executes health checks enqueued by producer
 - [Ingester](./ingester.md) - Processes health check results
-

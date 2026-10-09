@@ -2,8 +2,8 @@ package badge
 
 import (
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
 	"net/http"
-	"peekaping/internal/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"

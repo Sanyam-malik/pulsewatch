@@ -25,9 +25,16 @@ import type { HttpJsonQueryForm } from "./schema";
 import { deserialize, serialize } from "./schema";
 import { useEffect } from "react";
 import { useLocalizedTranslation } from "@/hooks/useTranslation";
+import { Plus, Trash2 } from "lucide-react";
+import { useFieldArray, useFormContext } from "react-hook-form";
 
 const HttpJsonQuery = () => {
   const { t } = useLocalizedTranslation();
+  const conditionForm = useFormContext<HttpJsonQueryForm>();
+  const { fields, append, remove } = useFieldArray({
+    control: conditionForm.control,
+    name: "conditions",
+  });
   const {
     form,
     setNotifierSheetOpen,
@@ -105,76 +112,138 @@ const HttpJsonQuery = () => {
           <CardContent className="space-y-4">
             <h4 className="text-lg font-semibold">{t("monitors.form.http_json_query.title")}</h4>
             <div className="text-sm text-muted-foreground mb-4">
-              Parse and extract specific data from the server's JSON response using GJSON path syntax.
+              Add one or more response rules. Rules are combined with the selected AND/OR operator. JSON rules use GJSON paths; an empty JSON path is allowed for whole-response ==/!= comparisons. When rules are present, they replace the legacy single JSON query check.
               <br /><br />
-              <strong>Leave empty to compare the entire JSON response:</strong> When no query is specified, the system will perform deep JSON equality comparison, ignoring key ordering and whitespace differences. This ensures accurate structural comparison of complete JSON objects.
-              <br /><br />
-              <strong>With query:</strong> Extract specific values and compare as strings using the specified condition.
-              <br /><br />
-              See <a href="https://github.com/tidwall/gjson/blob/master/SYNTAX.md" target="_blank" rel="noopener noreferrer" className="underline">GJSON syntax documentation</a> for path examples and supported features.
+              <a href="https://github.com/tidwall/gjson/blob/master/SYNTAX.md" target="_blank" rel="noopener noreferrer" className="underline">GJSON syntax documentation</a>
             </div>
 
             <FormField
-              control={form.control}
-              name="json_query"
+              control={conditionForm.control}
+              name="condition_operator"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("monitors.form.http_json_query.json_query_label")}</FormLabel>
+                  <FormLabel>Combine conditions</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="e.g., user.name or items.0.id (leave empty for full response)"
-                      {...field}
-                    />
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="and">All conditions must pass (AND)</SelectItem>
+                        <SelectItem value="or">At least one condition must pass (OR)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="json_condition"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("monitors.form.http_json_query.condition_label")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select condition" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="==">==</SelectItem>
-                        <SelectItem value="!=">!=</SelectItem>
-                        <SelectItem value=">">&gt;</SelectItem>
-                        <SelectItem value="<">&lt;</SelectItem>
-                        <SelectItem value=">=">&gt;=</SelectItem>
-                        <SelectItem value="<=">&lt;=</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {fields.map((condition, index) => {
+              const conditionType = conditionForm.watch(`conditions.${index}.type` as const) || "status";
+              const conditionOperator = conditionForm.watch(`conditions.${index}.operator` as const);
+              const isJSON = conditionType === "json";
+              const needsValue = conditionOperator !== "exists" && conditionOperator !== "not_exists";
+              return (
+                <div key={condition.id} className="space-y-4 rounded-lg border p-4">
+                  <div className="flex items-start gap-3">
+                    <FormField
+                      control={conditionForm.control}
+                      name={`conditions.${index}.type` as const}
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel>Check</FormLabel>
+                          <Select
+                            value={field.value}
+                            onValueChange={value => {
+                              field.onChange(value);
+                              conditionForm.setValue(`conditions.${index}.json_query`, "", { shouldValidate: true });
+                              if (value !== "json" && (conditionOperator === "exists" || conditionOperator === "not_exists")) {
+                                conditionForm.setValue(`conditions.${index}.operator`, "==", { shouldValidate: true });
+                              }
+                            }}
+                          >
+                            <FormControl>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="status">HTTP status code</SelectItem>
+                              <SelectItem value="response_time">Response time (ms)</SelectItem>
+                              <SelectItem value="json">JSON response</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {fields.length > 1 && (
+                      <Button type="button" variant="ghost" size="icon" className="mt-7" onClick={() => remove(index)} aria-label="Remove condition">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
 
-              <FormField
-                control={form.control}
-                name="expected_value"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("monitors.form.http_json_query.expected_value_label")}</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Expected value (full JSON if no query specified)"
-                        {...field}
+                  {isJSON && (
+                    <FormField
+                      control={conditionForm.control}
+                      name={`conditions.${index}.json_query` as const}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>GJSON path (blank compares the complete JSON value)</FormLabel>
+                          <FormControl><Input placeholder="e.g. data.status or items.0.id" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={conditionForm.control}
+                      name={`conditions.${index}.operator` as const}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Operator</FormLabel>
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                            <SelectContent>
+                              {(isJSON ? ["==", "!=", ">", "<", ">=", "<=", "exists", "not_exists"] : ["==", "!=", ">", "<", ">=", "<="]).map(operator => (
+                                <SelectItem key={operator} value={operator}>{operator}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {needsValue && (
+                      <FormField
+                        control={conditionForm.control}
+                        name={`conditions.${index}.expected_value` as const}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Expected value</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder={conditionType === "status" ? "200" : conditionType === "response_time" ? "500" : "value"}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => append({ type: "status", operator: "==", expected_value: "200" })}
+            >
+              <Plus className="mr-2 h-4 w-4" /> Add condition
+            </Button>
           </CardContent>
         </Card>
 

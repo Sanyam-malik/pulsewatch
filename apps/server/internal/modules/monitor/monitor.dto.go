@@ -1,9 +1,9 @@
 package monitor
 
-import "peekaping/internal/modules/heartbeat"
+import "github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
 
 type CreateUpdateDto struct {
-	Type            string   `json:"type" validate:"required" example:"http"`
+	Type            string   `json:"type" validate:"required" enums:"http,http-keyword,http-json-query,steam,gamedig,playwright,push,tcp,ping,dns,docker,grpc-keyword,snmp,mongodb,mysql,postgres,sqlserver,redis,mqtt,rabbitmq,kafka-producer" example:"http"`
 	Name            string   `json:"name" validate:"required,min=3" example:"My Monitor"`
 	Interval        int      `json:"interval" validate:"min=20" example:"60"`
 	MaxRetries      int      `json:"max_retries" validate:"min=0" example:"3"`
@@ -14,15 +14,16 @@ type CreateUpdateDto struct {
 	NotificationIds []string `json:"notification_ids" validate:"required" example:"6830ad485361f19c598d6d90"`
 	TagIds          []string `json:"tag_ids" example:"6830ad485361f19c598d6d90,6830ad485361f19c598d6d91"`
 	ProxyId         string   `json:"proxy_id" example:"6830ad485361f19c598d6d90"`
-	Config          string   `json:"config"`
-	PushToken       string   `json:"push_token"`
+	// Config is monitor-type-specific JSON. HTTP configs may include an AND/OR list of status, response-time, and JSON conditions.
+	Config    string `json:"config" example:"{\"host\":\"game.example.com\",\"port\":27015}"`
+	PushToken string `json:"push_token"`
 }
 
 type PartialUpdateDto struct {
 	Name            *string                  `json:"name,omitempty" example:"My Monitor"`
 	Interval        *int                     `json:"interval,omitempty" example:"60"`
 	Timeout         *int                     `json:"timeout,omitempty" example:"16"`
-	Type            *string                  `json:"type,omitempty" example:"http"`
+	Type            *string                  `json:"type,omitempty" enums:"http,http-keyword,http-json-query,steam,gamedig,playwright,push,tcp,ping,dns,docker,grpc-keyword,snmp,mongodb,mysql,postgres,sqlserver,redis,mqtt,rabbitmq,kafka-producer" example:"http"`
 	MaxRetries      *int                     `json:"max_retries,omitempty" example:"3"`
 	RetryInterval   *int                     `json:"retry_interval,omitempty" example:"60"`
 	ResendInterval  *int                     `json:"resend_interval,omitempty" example:"10"`
@@ -31,8 +32,9 @@ type PartialUpdateDto struct {
 	TagIds          []string                 `json:"tag_ids,omitempty" example:"6830ad485361f19c598d6d90,6830ad485361f19c598d6d91"`
 	ProxyId         *string                  `json:"proxy_id,omitempty" example:"6830ad485361f19c598d6d90"`
 	Status          *heartbeat.MonitorStatus `json:"status,omitempty" example:"1"`
-	Config          *string                  `json:"config,omitempty"`
-	PushToken       *string                  `json:"push_token,omitempty"`
+	// Config is monitor-type-specific JSON. HTTP configs may include an AND/OR list of status, response-time, and JSON conditions.
+	Config    *string `json:"config,omitempty"`
+	PushToken *string `json:"push_token,omitempty"`
 }
 
 // UptimeStatsDto represents uptime percentages for various periods
@@ -49,7 +51,7 @@ type MonitorResponseDto struct {
 	Name            string   `json:"name" example:"My Monitor"`
 	Interval        int      `json:"interval" example:"60"`
 	Timeout         int      `json:"timeout" example:"10"`
-	Type            string   `json:"type" example:"http"`
+	Type            string   `json:"type" enums:"http,http-keyword,http-json-query,steam,gamedig,playwright,push,tcp,ping,dns,docker,grpc-keyword,snmp,mongodb,mysql,postgres,sqlserver,redis,mqtt,rabbitmq,kafka-producer" example:"http"`
 	Active          bool     `json:"active" example:"true" default:"true"`
 	Status          int      `json:"status" example:"1"`
 	MaxRetries      int      `json:"max_retries" example:"3"`
@@ -60,8 +62,9 @@ type MonitorResponseDto struct {
 	NotificationIds []string `json:"notification_ids" example:"6830ad485361f19c598d6d90"`
 	TagIds          []string `json:"tag_ids" example:"6830ad485361f19c598d6d90,6830ad485361f19c598d6d91"`
 	ProxyId         string   `json:"proxy_id" example:"6830ad485361f19c598d6d90"`
-	Config          string   `json:"config"`
-	PushToken       string   `json:"push_token"`
+	// Config is monitor-type-specific JSON. HTTP configs may include an AND/OR list of status, response-time, and JSON conditions.
+	Config    string `json:"config"`
+	PushToken string `json:"push_token"`
 }
 
 // StatPointsSummaryDto represents stat points and summary for a period

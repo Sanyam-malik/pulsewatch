@@ -3,8 +3,8 @@ package executor
 import (
 	"context"
 	"fmt"
-	"peekaping/internal/modules/certificate"
-	"peekaping/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/certificate"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
 	"time"
 
 	"go.uber.org/zap"
@@ -56,7 +56,7 @@ func NewExecutorRegistry(
 	registry := make(map[string]Executor)
 
 	registry["http"] = NewHTTPExecutor(logger)
-	registry["http-keyword"] = NewHTTPExecutor(logger)
+	registry["http-keyword"] = NewHTTPKeywordExecutor(logger)
 	registry["http-json-query"] = NewHTTPExecutor(logger)
 	registry["push"] = NewPushExecutor(logger)
 	registry["tcp"] = NewTCPExecutor(logger)
@@ -73,6 +73,9 @@ func NewExecutorRegistry(
 	registry["mqtt"] = NewMQTTExecutor(logger)
 	registry["rabbitmq"] = NewRabbitMQExecutor(logger)
 	registry["kafka-producer"] = NewKafkaProducerExecutor(logger)
+	registry["steam"] = NewSteamExecutor(logger)
+	registry["gamedig"] = NewGameDigExecutor(logger)
+	registry["playwright"] = NewPlaywrightExecutor(logger)
 
 	return &ExecutorRegistry{
 		registry: registry,

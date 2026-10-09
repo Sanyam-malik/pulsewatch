@@ -1,7 +1,7 @@
 package executor
 
 import (
-	"peekaping/internal/utils"
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

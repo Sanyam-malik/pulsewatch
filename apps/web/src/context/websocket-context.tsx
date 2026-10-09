@@ -39,6 +39,8 @@ export const WebSocketProvider = ({
 	);
 
   const token = useAuthStore((state) => state.accessToken);
+  const activeGroupID = useAuthStore((state) => state.activeGroupID);
+  const user = useAuthStore((state) => state.user);
   // Track if refresh has been attempted
   const refreshAttemptedRef = React.useRef(false);
 
@@ -52,7 +54,7 @@ export const WebSocketProvider = ({
 
 		const newSocket = io(apiUrl, {
 			transports: ['websocket'],
-			query: { token },
+			query: { token, groupId: activeGroupID || user?.groupId },
 		});
 
 		newSocket.on('connect', () => {
@@ -118,7 +120,7 @@ export const WebSocketProvider = ({
 			setStatus(WebSocketStatus.DISCONNECTED);
       refreshAttemptedRef.current = false;
 		};
-	}, [token]); // Reconnect if the token changes
+	}, [token, activeGroupID, user?.groupId]); // Reconnect when credentials or workspace change
 
 	const value = useMemo(() => {
 		return { socket, status: status as WebSocketStatus };

@@ -5,12 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/version"
 	"net/http"
-	"peekaping/internal/config"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/modules/shared"
-	"peekaping/internal/version"
 	"strings"
 	"time"
 
@@ -67,7 +67,7 @@ func (g *GoogleChatSender) Send(
 
 	// Google Chat message formatting: https://developers.google.com/chat/api/guides/message-formats/basic
 	chatHeader := map[string]string{
-		"title": "Peekaping Alert",
+		"title": "Pulsewatch Alert",
 	}
 
 	if m != nil && hb != nil {
@@ -106,7 +106,7 @@ func (g *GoogleChatSender) Send(
 			"buttonList": map[string][]map[string]any{
 				"buttons": {
 					{
-						"text": "Visit Peekaping",
+						"text": "Visit Pulsewatch",
 						"onClick": map[string]any{
 							"openLink": map[string]string{
 								"url": buttonURL,
@@ -150,7 +150,7 @@ func (g *GoogleChatSender) Send(
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "Peekaping-GoogleChat/"+version.Version)
+	req.Header.Set("User-Agent", "Pulsewatch-GoogleChat/"+version.Version)
 
 	// Send request
 	resp, err := g.client.Do(req)

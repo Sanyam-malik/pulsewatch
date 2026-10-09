@@ -40,14 +40,14 @@ export type NtfyFormValues = z.infer<typeof schema>;
 export const defaultValues: NtfyFormValues = {
   type: "ntfy",
   server_url: "https://ntfy.sh",
-  topic: "peekaping",
+  topic: "pulsewatch",
   authentication_type: "none",
   username: "",
   password: "",
   token: "",
   priority: 3,
-  tags: "peekaping,monitoring",
-  title: "Peekaping Alert - {{ name }}",
+  tags: "pulsewatch,monitoring",
+  title: "Pulsewatch Alert - {{ name }}",
   custom_message: "{{ msg }}",
 };
 
@@ -113,7 +113,7 @@ export default function NtfyForm() {
           <FormItem>
             <FormLabel>{t("notifications.form.ntfy.topic_label")}</FormLabel>
             <FormControl>
-              <Input placeholder="peekaping" required {...field} />
+              <Input placeholder="pulsewatch" required {...field} />
             </FormControl>
             <FormDescription>
               {t("notifications.form.ntfy.topic_description")}
@@ -273,7 +273,7 @@ export default function NtfyForm() {
           <FormItem>
             <FormLabel>{t("notifications.form.ntfy.tags_label")}</FormLabel>
             <FormControl>
-              <Input placeholder="peekaping,monitoring,alert" {...field} />
+              <Input placeholder="pulsewatch,monitoring,alert" {...field} />
             </FormControl>
             <FormDescription>
               {t("notifications.form.ntfy.tags_description")}: {"{{ name }}"}, {"{{ status }}"}
@@ -290,7 +290,7 @@ export default function NtfyForm() {
           <FormItem>
             <FormLabel>{t("notifications.form.ntfy.title_label")}</FormLabel>
             <FormControl>
-              <Input placeholder="Peekaping Alert - {{ name }}" {...field} />
+              <Input placeholder="Pulsewatch Alert - {{ name }}" {...field} />
             </FormControl>
             <FormDescription>
               {t("notifications.form.ntfy.title_description")}:{" "}

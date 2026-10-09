@@ -63,7 +63,9 @@ export type AuthModel = {
   active?: boolean;
   createdAt?: string;
   email?: string;
+  groupId?: string;
   id?: string;
+  role?: "owner" | "admin" | "member" | "viewer";
   twofa_status?: boolean;
   updatedAt?: string;
 };
@@ -229,7 +231,7 @@ export type MonitorCreateUpdateDto = {
   retry_interval?: number;
   tag_ids?: Array<string>;
   timeout?: number;
-  type: string;
+  type: 'http' | 'http-keyword' | 'http-json-query' | 'steam' | 'gamedig' | 'playwright' | 'push' | 'tcp' | 'ping' | 'dns' | 'docker' | 'grpc-keyword' | 'snmp' | 'mongodb' | 'mysql' | 'postgres' | 'sqlserver' | 'redis' | 'mqtt' | 'rabbitmq' | 'kafka-producer';
 };
 
 export type MonitorCustomUptimeStatsDto = {
@@ -272,9 +274,9 @@ export type MonitorModel = {
    */
   timeout?: number;
   /**
-   * connection type: http, tcp, ping, etc
+   * Monitor type: http, http-keyword, http-json-query, steam, gamedig, playwright, etc.
    */
-  type: string;
+  type: 'http' | 'http-keyword' | 'http-json-query' | 'steam' | 'gamedig' | 'playwright' | 'push' | 'tcp' | 'ping' | 'dns' | 'docker' | 'grpc-keyword' | 'snmp' | 'mongodb' | 'mysql' | 'postgres' | 'sqlserver' | 'redis' | 'mqtt' | 'rabbitmq' | 'kafka-producer';
   updated_at?: string;
 };
 
@@ -294,7 +296,7 @@ export type MonitorMonitorResponseDto = {
   status?: number;
   tag_ids?: Array<string>;
   timeout?: number;
-  type?: string;
+  type?: 'http' | 'http-keyword' | 'http-json-query' | 'steam' | 'gamedig' | 'playwright' | 'push' | 'tcp' | 'ping' | 'dns' | 'docker' | 'grpc-keyword' | 'snmp' | 'mongodb' | 'mysql' | 'postgres' | 'sqlserver' | 'redis' | 'mqtt' | 'rabbitmq' | 'kafka-producer';
   updated_at?: string;
 };
 
@@ -312,7 +314,7 @@ export type MonitorPartialUpdateDto = {
   status?: HeartbeatMonitorStatus;
   tag_ids?: Array<string>;
   timeout?: number;
-  type?: string;
+  type?: 'http' | 'http-keyword' | 'http-json-query' | 'steam' | 'gamedig' | 'playwright' | 'push' | 'tcp' | 'ping' | 'dns' | 'docker' | 'grpc-keyword' | 'snmp' | 'mongodb' | 'mysql' | 'postgres' | 'sqlserver' | 'redis' | 'mqtt' | 'rabbitmq' | 'kafka-producer';
 };
 
 export type MonitorStatPoint = {

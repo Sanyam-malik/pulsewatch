@@ -4464,7 +4464,9 @@ const docTemplate = `{
                     "example": true
                 },
                 "config": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "JSON-encoded monitor-specific configuration. HTTP monitors may include condition_operator and up to 20 status, response-time, or JSON-path conditions; see the monitor conditions guide.",
+                    "example": "{\"host\":\"game.example.com\",\"port\":27015}"
                 },
                 "interval": {
                     "type": "integer",
@@ -4524,7 +4526,31 @@ const docTemplate = `{
                 },
                 "type": {
                     "type": "string",
-                    "example": "http"
+                    "example": "http",
+                    "enum": [
+                        "http",
+                        "http-keyword",
+                        "http-json-query",
+                        "steam",
+                        "gamedig",
+                        "playwright",
+                        "push",
+                        "tcp",
+                        "ping",
+                        "dns",
+                        "docker",
+                        "grpc-keyword",
+                        "snmp",
+                        "mongodb",
+                        "mysql",
+                        "postgres",
+                        "sqlserver",
+                        "redis",
+                        "mqtt",
+                        "rabbitmq",
+                        "kafka-producer"
+                    ],
+                    "description": "Monitor type. Configuration fields vary by type."
                 }
             }
         },
@@ -4555,7 +4581,8 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "config": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Monitor configuration JSON; fields depend on type."
                 },
                 "created_at": {
                     "type": "string"
@@ -4611,9 +4638,32 @@ const docTemplate = `{
                     "example": 16
                 },
                 "type": {
-                    "description": "connection type: http, tcp, ping, etc",
+                    "description": "Monitor type: http, http-keyword, http-json-query, steam, gamedig, playwright, and other registered types.",
                     "type": "string",
-                    "example": "http"
+                    "example": "http",
+                    "enum": [
+                        "http",
+                        "http-keyword",
+                        "http-json-query",
+                        "steam",
+                        "gamedig",
+                        "playwright",
+                        "push",
+                        "tcp",
+                        "ping",
+                        "dns",
+                        "docker",
+                        "grpc-keyword",
+                        "snmp",
+                        "mongodb",
+                        "mysql",
+                        "postgres",
+                        "sqlserver",
+                        "redis",
+                        "mqtt",
+                        "rabbitmq",
+                        "kafka-producer"
+                    ]
                 },
                 "updated_at": {
                     "type": "string"
@@ -4629,7 +4679,8 @@ const docTemplate = `{
                     "example": true
                 },
                 "config": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "JSON-encoded monitor-specific configuration. HTTP monitors may include condition_operator and up to 20 status, response-time, or JSON-path conditions; see the monitor conditions guide."
                 },
                 "created_at": {
                     "type": "string",
@@ -4695,7 +4746,31 @@ const docTemplate = `{
                 },
                 "type": {
                     "type": "string",
-                    "example": "http"
+                    "example": "http",
+                    "enum": [
+                        "http",
+                        "http-keyword",
+                        "http-json-query",
+                        "steam",
+                        "gamedig",
+                        "playwright",
+                        "push",
+                        "tcp",
+                        "ping",
+                        "dns",
+                        "docker",
+                        "grpc-keyword",
+                        "snmp",
+                        "mongodb",
+                        "mysql",
+                        "postgres",
+                        "sqlserver",
+                        "redis",
+                        "mqtt",
+                        "rabbitmq",
+                        "kafka-producer"
+                    ],
+                    "description": "Monitor type. Configuration fields vary by type."
                 },
                 "updated_at": {
                     "type": "string",
@@ -4711,7 +4786,8 @@ const docTemplate = `{
                     "example": true
                 },
                 "config": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "JSON-encoded monitor-specific configuration. HTTP monitors may include condition_operator and up to 20 status, response-time, or JSON-path conditions; see the monitor conditions guide."
                 },
                 "interval": {
                     "type": "integer",
@@ -4773,7 +4849,31 @@ const docTemplate = `{
                 },
                 "type": {
                     "type": "string",
-                    "example": "http"
+                    "example": "http",
+                    "enum": [
+                        "http",
+                        "http-keyword",
+                        "http-json-query",
+                        "steam",
+                        "gamedig",
+                        "playwright",
+                        "push",
+                        "tcp",
+                        "ping",
+                        "dns",
+                        "docker",
+                        "grpc-keyword",
+                        "snmp",
+                        "mongodb",
+                        "mysql",
+                        "postgres",
+                        "sqlserver",
+                        "redis",
+                        "mqtt",
+                        "rabbitmq",
+                        "kafka-producer"
+                    ],
+                    "description": "Monitor type. Configuration fields vary by type."
                 }
             }
         },
@@ -5906,7 +6006,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "Peekaping API",
+	Title:            "Pulsewatch API",
 	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/shared"
+	"github.com/sanyam-malik/pulsewatch/internal/utils"
 	"net/url"
-	"peekaping/internal/modules/shared"
-	"peekaping/internal/utils"
 	"time"
 )
 

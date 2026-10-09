@@ -3,6 +3,7 @@ package maintenance
 import (
 	"context"
 	"encoding/json"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,6 +30,7 @@ type sqlModel struct {
 	Duration      *int      `bun:"duration"`
 	CreatedAt     time.Time `bun:"created_at,nullzero,notnull,default:current_timestamp"`
 	UpdatedAt     time.Time `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
+	GroupID       string    `bun:"group_id"`
 }
 
 func toDomainModelFromSQL(sm *sqlModel) *Model {
@@ -96,8 +98,14 @@ func (r *SQLRepositoryImpl) Create(ctx context.Context, entity *CreateUpdateDto)
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 	}
+	query := r.db.NewInsert().Model(sm).Returning("*")
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		sm.GroupID = groupID
+	} else {
+		query = query.Column("id", "title", "description", "active", "strategy", "start_date_time", "end_date_time", "start_time", "end_time", "weekdays", "days_of_month", "interval_day", "cron", "timezone", "duration", "created_at", "updated_at")
+	}
 
-	_, err := r.db.NewInsert().Model(sm).Returning("*").Exec(ctx)
+	_, err := query.Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +115,11 @@ func (r *SQLRepositoryImpl) Create(ctx context.Context, entity *CreateUpdateDto)
 
 func (r *SQLRepositoryImpl) FindByID(ctx context.Context, id string) (*Model, error) {
 	sm := new(sqlModel)
-	err := r.db.NewSelect().Model(sm).Where("id = ?", id).Scan(ctx)
+	query := r.db.NewSelect().Model(sm).ExcludeColumn("group_id").Where("id = ?", id)
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	err := query.Scan(ctx)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			return nil, nil
@@ -119,6 +131,10 @@ func (r *SQLRepositoryImpl) FindByID(ctx context.Context, id string) (*Model, er
 
 func (r *SQLRepositoryImpl) FindAll(ctx context.Context, page int, limit int, q string, strategy string) ([]*Model, error) {
 	query := r.db.NewSelect().Model((*sqlModel)(nil))
+	query = query.ExcludeColumn("group_id")
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
 
 	if q != "" {
 		query = query.Where("LOWER(title) LIKE ? OR LOWER(description) LIKE ?", "%"+q+"%", "%"+q+"%")
@@ -169,11 +185,15 @@ func (r *SQLRepositoryImpl) UpdateFull(ctx context.Context, id string, entity *C
 		UpdatedAt:     time.Now(),
 	}
 
-	_, err := r.db.NewUpdate().
+	query := r.db.NewUpdate().
 		Model(sm).
 		Where("id = ?", id).
-		OmitZero().
-		Exec(ctx)
+		ExcludeColumn("group_id").
+		OmitZero()
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	_, err := query.Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -183,6 +203,9 @@ func (r *SQLRepositoryImpl) UpdateFull(ctx context.Context, id string, entity *C
 
 func (r *SQLRepositoryImpl) UpdatePartial(ctx context.Context, id string, entity *PartialUpdateDto) (*Model, error) {
 	query := r.db.NewUpdate().Model((*sqlModel)(nil)).Where("id = ?", id)
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
 
 	hasUpdates := false
 
@@ -261,17 +284,24 @@ func (r *SQLRepositoryImpl) UpdatePartial(ctx context.Context, id string, entity
 }
 
 func (r *SQLRepositoryImpl) Delete(ctx context.Context, id string) error {
-	_, err := r.db.NewDelete().Model((*sqlModel)(nil)).Where("id = ?", id).Exec(ctx)
+	query := r.db.NewDelete().Model((*sqlModel)(nil)).Where("id = ?", id)
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	_, err := query.Exec(ctx)
 	return err
 }
 
 func (r *SQLRepositoryImpl) SetActive(ctx context.Context, id string, active bool) (*Model, error) {
-	_, err := r.db.NewUpdate().
+	query := r.db.NewUpdate().
 		Model((*sqlModel)(nil)).
 		Set("active = ?", active).
 		Set("updated_at = ?", time.Now()).
-		Where("id = ?", id).
-		Exec(ctx)
+		Where("id = ?", id)
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	_, err := query.Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -284,12 +314,16 @@ func (r *SQLRepositoryImpl) GetMaintenancesByMonitorID(ctx context.Context, moni
 	var sms []*sqlModel
 
 	// Use JOIN to get maintenances that are associated with the monitor and are active
-	err := r.db.NewSelect().
+	query := r.db.NewSelect().
 		Model(&sms).
 		Join("JOIN monitor_maintenances mm ON mm.maintenance_id = m.id").
+		ExcludeColumn("group_id").
 		Where("mm.monitor_id = ? AND m.active = ?", monitorID, true).
-		Order("m.updated_at DESC").
-		Scan(ctx)
+		Order("m.updated_at DESC")
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("m.group_id = ?", groupID)
+	}
+	err := query.Scan(ctx)
 
 	if err != nil {
 		return nil, err

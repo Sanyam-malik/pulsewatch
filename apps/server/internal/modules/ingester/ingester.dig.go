@@ -1,10 +1,10 @@
 package ingester
 
 import (
-	"peekaping/internal/modules/certificate"
-	"peekaping/internal/modules/events"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor_maintenance"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/certificate"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/events"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_maintenance"
 
 	"github.com/hibiken/asynq"
 	"go.uber.org/dig"

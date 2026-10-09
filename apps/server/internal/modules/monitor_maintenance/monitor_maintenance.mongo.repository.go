@@ -3,7 +3,9 @@ package monitor_maintenance
 import (
 	"context"
 	"errors"
-	"peekaping/internal/config"
+	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -65,6 +67,30 @@ func (r *RepositoryImpl) Create(ctx context.Context, model *Model) (*Model, erro
 	maintenanceObjectID, err := primitive.ObjectIDFromHex(model.MaintenanceID)
 	if err != nil {
 		return nil, err
+	}
+	groupID, scoped, err := auth.MongoGroupIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if scoped {
+		for _, resource := range []struct {
+			collection string
+			id         primitive.ObjectID
+		}{
+			{collection: "monitor", id: monitorObjectID},
+			{collection: "maintenance", id: maintenanceObjectID},
+		} {
+			err := r.db.Collection(resource.collection).FindOne(ctx, bson.M{
+				"_id":      resource.id,
+				"group_id": groupID,
+			}).Err()
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				return nil, fmt.Errorf("monitor and maintenance must belong to the selected group")
+			}
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	mm := &mongoModel{

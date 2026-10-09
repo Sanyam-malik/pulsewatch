@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"peekaping/internal/modules/monitor_notification"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_notification"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

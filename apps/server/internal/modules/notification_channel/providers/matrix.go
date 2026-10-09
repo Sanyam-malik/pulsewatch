@@ -7,11 +7,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
+	"github.com/sanyam-malik/pulsewatch/internal/version"
 	"net/http"
 	"net/url"
-	"peekaping/internal/modules/heartbeat"
-	"peekaping/internal/modules/monitor"
-	"peekaping/internal/version"
 	"time"
 
 	liquid "github.com/osteele/liquid"
@@ -58,7 +58,7 @@ func (m *MatrixSender) generateRandomString(size int) string {
 	if _, err := rand.Read(bytes); err != nil {
 		m.logger.Warnf("Failed to generate random bytes: %v", err)
 		// Fallback to timestamp-based string
-		return fmt.Sprintf("peekaping_%d", time.Now().UnixNano())
+		return fmt.Sprintf("pulsewatch_%d", time.Now().UnixNano())
 	}
 
 	randomString := base64.URLEncoding.EncodeToString(bytes)
@@ -130,7 +130,7 @@ func (m *MatrixSender) Send(
 	// Set headers
 	req.Header.Set("Authorization", "Bearer "+cfg.AccessToken)
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "Peekaping-Matrix/"+version.Version)
+	req.Header.Set("User-Agent", "Pulsewatch-Matrix/"+version.Version)
 
 	// Send the request
 	resp, err := m.client.Do(req)

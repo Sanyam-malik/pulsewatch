@@ -2,6 +2,7 @@ package api_key
 
 import (
 	"context"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,16 +12,17 @@ import (
 type sqlModel struct {
 	bun.BaseModel `bun:"table:api_keys,alias:ak"`
 
-	ID             string     `bun:"id,pk"`
-	Name           string     `bun:"name,notnull"`
-	KeyHash        string     `bun:"key_hash,notnull"`
-	DisplayKey     string     `bun:"display_key,notnull"`
-	LastUsed       *time.Time `bun:"last_used"`
-	ExpiresAt      *time.Time `bun:"expires_at"`
-	UsageCount     int64      `bun:"usage_count,notnull,default:0"`
-	MaxUsageCount  *int64     `bun:"max_usage_count"`
-	CreatedAt      time.Time  `bun:"created_at,nullzero,notnull,default:current_timestamp"`
-	UpdatedAt      time.Time  `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
+	ID            string     `bun:"id,pk"`
+	Name          string     `bun:"name,notnull"`
+	KeyHash       string     `bun:"key_hash,notnull"`
+	DisplayKey    string     `bun:"display_key,notnull"`
+	LastUsed      *time.Time `bun:"last_used"`
+	ExpiresAt     *time.Time `bun:"expires_at"`
+	UsageCount    int64      `bun:"usage_count,notnull,default:0"`
+	MaxUsageCount *int64     `bun:"max_usage_count"`
+	CreatedAt     time.Time  `bun:"created_at,nullzero,notnull,default:current_timestamp"`
+	UpdatedAt     time.Time  `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
+	GroupID       string     `bun:"group_id"`
 }
 
 func toDomainModelFromSQL(sm *sqlModel) *Model {
@@ -29,9 +31,10 @@ func toDomainModelFromSQL(sm *sqlModel) *Model {
 	if displayKey == "" {
 		displayKey = ApiKeyPrefix + sm.ID[:6] + "..."
 	}
-	
+
 	return &Model{
 		ID:            sm.ID,
+		GroupID:       sm.GroupID,
 		Name:          sm.Name,
 		KeyHash:       sm.KeyHash,
 		DisplayKey:    displayKey,
@@ -56,6 +59,7 @@ func toSQLModel(m *Model) *sqlModel {
 		MaxUsageCount: m.MaxUsageCount,
 		CreatedAt:     m.CreatedAt,
 		UpdatedAt:     m.UpdatedAt,
+		GroupID:       m.GroupID,
 	}
 }
 
@@ -85,8 +89,14 @@ func (r *SQLRepositoryImpl) Create(ctx context.Context, apiKey *CreateModel) (*A
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 	}
+	query := r.db.NewInsert().Model(sm).Returning("*")
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		sm.GroupID = groupID
+	} else {
+		query = query.Column("id", "name", "key_hash", "display_key", "last_used", "expires_at", "usage_count", "max_usage_count", "created_at", "updated_at")
+	}
 
-	_, err := r.db.NewInsert().Model(sm).Returning("*").Exec(ctx)
+	_, err := query.Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +111,11 @@ func (r *SQLRepositoryImpl) Create(ctx context.Context, apiKey *CreateModel) (*A
 // MARK: FindByID
 func (r *SQLRepositoryImpl) FindByID(ctx context.Context, id string) (*Model, error) {
 	sm := new(sqlModel)
-	err := r.db.NewSelect().Model(sm).Where("id = ?", id).Scan(ctx)
+	query := r.db.NewSelect().Model(sm).Where("id = ?", id)
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	err := query.Scan(ctx)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			return nil, nil
@@ -114,7 +128,11 @@ func (r *SQLRepositoryImpl) FindByID(ctx context.Context, id string) (*Model, er
 // MARK: FindAll
 func (r *SQLRepositoryImpl) FindAll(ctx context.Context) ([]*Model, error) {
 	var sms []*sqlModel
-	err := r.db.NewSelect().Model(&sms).Order("created_at DESC").Scan(ctx)
+	query := r.db.NewSelect().Model(&sms).ExcludeColumn("group_id")
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	err := query.Order("created_at DESC").Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -129,10 +147,13 @@ func (r *SQLRepositoryImpl) FindAll(ctx context.Context) ([]*Model, error) {
 // MARK: Update
 func (r *SQLRepositoryImpl) Update(ctx context.Context, id string, update *UpdateModel) (*Model, error) {
 	sm := new(sqlModel)
-	
+
 	// Build update query dynamically
 	query := r.db.NewUpdate().Model(sm).Where("id = ?", id)
-	
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+
 	if update.Name != nil {
 		query = query.Set("name = ?", *update.Name)
 	}
@@ -142,40 +163,50 @@ func (r *SQLRepositoryImpl) Update(ctx context.Context, id string, update *Updat
 	if update.MaxUsageCount != nil {
 		query = query.Set("max_usage_count = ?", *update.MaxUsageCount)
 	}
-	
+
 	query = query.Set("updated_at = ?", time.Now())
-	
+
 	_, err := query.Returning("*").Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return toDomainModelFromSQL(sm), nil
 }
 
 // MARK: Delete
 func (r *SQLRepositoryImpl) Delete(ctx context.Context, id string) error {
-	_, err := r.db.NewDelete().Model((*sqlModel)(nil)).Where("id = ?", id).Exec(ctx)
+	query := r.db.NewDelete().Model((*sqlModel)(nil)).Where("id = ?", id)
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	_, err := query.Exec(ctx)
 	return err
 }
 
 // MARK: UpdateLastUsed
 func (r *SQLRepositoryImpl) UpdateLastUsed(ctx context.Context, id string) error {
-	_, err := r.db.NewUpdate().Model((*sqlModel)(nil)).
+	query := r.db.NewUpdate().Model((*sqlModel)(nil)).
 		Set("last_used = ?", time.Now()).
 		Set("usage_count = usage_count + 1").
-		Where("id = ?", id).
-		Exec(ctx)
+		Where("id = ?", id)
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	_, err := query.Exec(ctx)
 	return err
 }
 
 // MARK: UpdateKeyHash
 func (r *SQLRepositoryImpl) UpdateKeyHash(ctx context.Context, id string, keyHash string, displayKey string) error {
-	_, err := r.db.NewUpdate().Model((*sqlModel)(nil)).
+	query := r.db.NewUpdate().Model((*sqlModel)(nil)).
 		Set("key_hash = ?", keyHash).
 		Set("display_key = ?", displayKey).
 		Set("updated_at = ?", time.Now()).
-		Where("id = ?", id).
-		Exec(ctx)
+		Where("id = ?", id)
+	if groupID, ok := auth.GroupIDFromContext(ctx); ok {
+		query = query.Where("group_id = ?", groupID)
+	}
+	_, err := query.Exec(ctx)
 	return err
 }

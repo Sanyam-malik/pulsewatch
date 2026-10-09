@@ -2,13 +2,14 @@ package websocket
 
 import (
 	"context"
-	"fmt"
+	"github.com/sanyam-malik/pulsewatch/internal/config"
+	"github.com/sanyam-malik/pulsewatch/internal/infra"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/events"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
 	"net/http"
-	"peekaping/internal/config"
-	"peekaping/internal/infra"
-	"peekaping/internal/modules/auth"
-	"peekaping/internal/modules/events"
-	"peekaping/internal/modules/heartbeat"
+	"strings"
 
 	"github.com/zishang520/socket.io/v2/socket"
 	"go.uber.org/zap"
@@ -18,16 +19,21 @@ type Server struct {
 	io         *socket.Server
 	eventBus   events.EventBus
 	tokenMaker *auth.TokenMaker
+	identity   auth.Repository
 }
 
 type SocketData struct {
-	UserId string
+	UserId  string
+	GroupID string
+	Role    string
 }
 
 func NewServer(
 	cfg *config.Config,
 	eventBus events.EventBus,
 	tokenMaker *auth.TokenMaker,
+	identity auth.Repository,
+	monitorService monitor.Service,
 	logger *zap.SugaredLogger,
 ) (*Server, error) {
 	opts := socket.DefaultServerOptions()
@@ -37,6 +43,7 @@ func NewServer(
 		io:         io,
 		eventBus:   eventBus,
 		tokenMaker: tokenMaker,
+		identity:   identity,
 	}
 
 	io.Use(func(s *socket.Socket, next func(*socket.ExtendedError)) {
@@ -54,7 +61,28 @@ func NewServer(
 			return
 		}
 
-		data := SocketData{UserId: fmt.Sprint(claims.UserID)}
+		user, err := identity.FindByID(ctx, claims.UserID)
+		if err != nil || user == nil || !user.Active {
+			next(socket.NewExtendedError("Unauthorized", nil))
+			return
+		}
+		groupID, _ := s.Request().Query().Get("groupId")
+		if groupID == "" {
+			groupID = claims.GroupID
+		}
+		membership, err := identity.ResolveMembership(ctx, user.ID, groupID)
+		if err != nil || membership == nil {
+			if groupID != "" {
+				next(socket.NewExtendedError("Unauthorized", nil))
+				return
+			}
+			membership, err = identity.ResolveMembership(ctx, user.ID, "")
+			if err != nil || membership == nil {
+				next(socket.NewExtendedError("Unauthorized", nil))
+				return
+			}
+		}
+		data := SocketData{UserId: user.ID, GroupID: membership.GroupID, Role: membership.Role}
 
 		s.SetData(data)
 
@@ -63,25 +91,51 @@ func NewServer(
 
 	io.On("connection", func(clients ...interface{}) {
 		client := clients[0].(*socket.Socket)
-		userId := client.Data().(SocketData).UserId
+		data := client.Data().(SocketData)
+		userId := data.UserId
 
 		logger.Debugf("[WS]connection: %s", userId)
 
 		client.On("join_room", func(args ...interface{}) {
-			roomName := args[0].(string)
+			if len(args) == 0 {
+				return
+			}
+			roomName, ok := args[0].(string)
+			if !ok {
+				return
+			}
 			logger.Debugf("join_room: %s", roomName)
-
-			// TODO: validate if user allowed to join room
-			client.Join(socket.Room(roomName))
-			// ack([]interface{}{map[string]string{"status": "ok"}}, nil)
+			switch {
+			case roomName == "monitor:all":
+				client.Join(socket.Room("group:" + data.GroupID + ":monitor:all"))
+			case strings.HasPrefix(roomName, "monitor:"):
+				monitorID := strings.TrimPrefix(roomName, "monitor:")
+				ctx := auth.WithIdentity(context.Background(), data.GroupID, data.Role)
+				visibleMonitor, err := monitorService.FindByID(ctx, monitorID)
+				if err != nil || visibleMonitor == nil {
+					logger.Warnw("Rejected websocket room access", "userId", userId, "room", roomName)
+					return
+				}
+				client.Join(socket.Room(roomName))
+			default:
+				logger.Warnw("Rejected unsupported websocket room", "userId", userId, "room", roomName)
+			}
 		})
 
 		client.On("leave_room", func(args ...interface{}) {
-			roomName := args[0].(string)
+			if len(args) == 0 {
+				return
+			}
+			roomName, ok := args[0].(string)
+			if !ok {
+				return
+			}
 			logger.Debugf("leave_room: %s", roomName)
-			// ack := args[1].(func([]interface{}, error))
-			client.Leave(socket.Room(roomName))
-			// ack([]interface{}{map[string]string{"status": "ok"}}, nil)
+			if roomName == "monitor:all" {
+				client.Leave(socket.Room("group:" + data.GroupID + ":monitor:all"))
+			} else {
+				client.Leave(socket.Room(roomName))
+			}
 		})
 	})
 
@@ -94,7 +148,11 @@ func NewServer(
 		}
 		roomName := "monitor:" + hb.MonitorID
 		server.io.To(socket.Room(roomName)).Emit(roomName+":heartbeat", hb)
-		server.io.To(socket.Room("monitor:all")).Emit("monitor:all:heartbeat", hb)
+		mon, err := monitorService.FindByID(context.Background(), hb.MonitorID)
+		if err != nil || mon == nil || mon.GroupID == "" {
+			return
+		}
+		server.io.To(socket.Room("group:"+mon.GroupID+":monitor:all")).Emit("monitor:all:heartbeat", hb)
 	})
 
 	return server, nil

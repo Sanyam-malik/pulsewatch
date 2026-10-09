@@ -8,6 +8,8 @@ type Model struct {
 	ID             string    `json:"id"`
 	Email          string    `json:"email"`
 	Password       string    `json:"-"`
+	GroupID        string    `json:"groupId,omitempty"`
+	Role           string    `json:"role,omitempty"`
 	Active         bool      `json:"active"`
 	TwoFASecret    string    `json:"-"`
 	TwoFAStatus    bool      `json:"twofa_status"`
