@@ -3,7 +3,6 @@ name: Test and Lint
 on:
   pull_request:
     paths-ignore:
-      - 'apps/docs/**'
       - '*.md'
       - 'README.md'
       - 'CHANGELOG.md'
@@ -11,7 +10,6 @@ on:
     branches: [ main, master ]
   push:
     paths-ignore:
-      - 'apps/docs/**'
       - '*.md'
       - 'README.md'
       - 'CHANGELOG.md'
@@ -83,4 +81,3 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: Sanyam-malik/pulsewatch
           file: apps/server/coverage.txt
-

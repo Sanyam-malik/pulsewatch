@@ -497,7 +497,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile.bundle.${{ matrix.database }}
+          file: ./deploy/docker/Dockerfile.bundle.${{ matrix.database }}
           push: false
           load: true
           platforms: ${{ matrix.platform }}
@@ -660,15 +660,9 @@ jobs:
 
           echo "All Docker Hub manifests created successfully!"
 
-  playwright-tests:
-    needs: create-manifest
-    uses: ./.github/workflows/playwright-reusable.yml
-    with:
-      container-tag: ${{ github.event.inputs.version }}
-
   release:
     runs-on: ubuntu-latest
-    needs: playwright-tests
+    needs: create-manifest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

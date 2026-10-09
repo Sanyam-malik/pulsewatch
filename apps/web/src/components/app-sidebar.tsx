@@ -87,8 +87,8 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     ],
     navSecondary: [
       {
-        title: "Get Help",
-        url: "https://sanyam-malik.github.io/pulsewatch/docs/",
+        title: "Project README",
+        url: "https://github.com/Sanyam-malik/pulsewatch#readme",
         icon: HelpCircleIcon,
         target: "_blank",
       },
