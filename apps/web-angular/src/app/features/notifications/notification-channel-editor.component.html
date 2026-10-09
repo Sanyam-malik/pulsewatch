@@ -1,0 +1,126 @@
+<main class="editor-page">
+  <a class="back-link" routerLink="/notification-channels">← Notification channels</a>
+
+  @if (loading) {
+    <p role="status">Loading notification channel…</p>
+  } @else {
+    <section class="editor-card">
+      <header>
+        <p class="eyebrow">Delivery integrations</p>
+        <h1>{{ title }}</h1>
+      </header>
+
+      @if (error) {
+        <p class="error-banner" role="alert">{{ error }}</p>
+      }
+      @if (notice) {
+        <p class="success-banner" role="status">{{ notice }}</p>
+      }
+
+      <form (ngSubmit)="submit()" novalidate>
+        <div class="field">
+          <label for="channel-type">Provider</label>
+          <select id="channel-type" [value]="type" (change)="selectProvider($any($event.target).value)">
+            @for (provider of providers; track provider.type) {
+              <option [value]="provider.type">{{ provider.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="channel-name">Friendly name</label>
+          <input
+            id="channel-name"
+            name="name"
+            type="text"
+            autocomplete="off"
+            [value]="name"
+            (input)="name = $any($event.target).value; notice = ''; error = ''; fieldErrors['name'] = ''"
+            [attr.aria-invalid]="!!fieldErrors['name']"
+            required
+          />
+          @if (fieldErrors['name']) { <p class="field-error">{{ fieldErrors['name'] }}</p> }
+        </div>
+
+        @if (providerInfo; as selectedProvider) {
+          <section class="provider-fields" [attr.aria-label]="selectedProvider.label + ' configuration'">
+            @for (field of selectedProvider.fields; track field.key) {
+              @if (isFieldVisible(field)) {
+                <div class="field" [class.checkbox-field]="field.kind === 'checkbox'">
+                  @if (field.kind === 'checkbox') {
+                    <label class="checkbox-label" [for]="'config-' + field.key">
+                      <input
+                        [id]="'config-' + field.key"
+                        type="checkbox"
+                        [checked]="config[field.key] === true"
+                        (change)="setFieldValue(field, $event)"
+                      />
+                      <span>{{ field.label }}</span>
+                    </label>
+                  } @else {
+                    <label [for]="'config-' + field.key">{{ field.label }}</label>
+                    @if (field.kind === 'textarea') {
+                      <textarea
+                        [id]="'config-' + field.key"
+                        rows="4"
+                        [value]="fieldValue(field.key)"
+                        (input)="setFieldValue(field, $event)"
+                        [attr.aria-invalid]="!!fieldErrors[field.key]"
+                      ></textarea>
+                    } @else if (field.kind === 'select') {
+                      <select
+                        [id]="'config-' + field.key"
+                        [value]="fieldValue(field.key)"
+                        (change)="setFieldValue(field, $event)"
+                        [attr.aria-invalid]="!!fieldErrors[field.key]"
+                      >
+                        @for (option of field.options ?? []; track option.value) {
+                          <option [value]="option.value">{{ option.label }}</option>
+                        }
+                      </select>
+                    } @else {
+                      <input
+                        [id]="'config-' + field.key"
+                        [type]="field.kind === 'password' ? 'password' : field.kind === 'number' ? 'number' : field.kind === 'url' ? 'url' : field.kind === 'email' ? 'email' : 'text'"
+                        [value]="fieldValue(field.key)"
+                        (input)="setFieldValue(field, $event)"
+                        [required]="field.required ?? false"
+                        [attr.min]="field.min ?? null"
+                        [attr.max]="field.max ?? null"
+                        [attr.aria-invalid]="!!fieldErrors[field.key]"
+                        autocomplete="off"
+                      />
+                    }
+                    @if (fieldErrors[field.key]) { <p class="field-error">{{ fieldErrors[field.key] }}</p> }
+                  }
+                </div>
+              }
+            }
+          </section>
+        }
+
+        <fieldset class="channel-state-settings">
+          <legend>Channel state</legend>
+          <label class="checkbox-label">
+            <input type="checkbox" name="active" [checked]="active" (change)="active = $any($event.target).checked" />
+            <span>Active</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" name="is-default" [checked]="isDefault" (change)="isDefault = $any($event.target).checked" />
+            <span>Default channel</span>
+          </label>
+        </fieldset>
+
+        <div class="actions">
+          <button class="primary-button" type="submit" [disabled]="saving">
+            {{ saving ? 'Saving…' : 'Save channel' }}
+          </button>
+          <button class="secondary-button" type="button" [disabled]="testing" (click)="testChannel()">
+            {{ testing ? 'Sending test…' : 'Send test' }}
+          </button>
+          <a class="cancel-link" routerLink="/notification-channels">Cancel</a>
+        </div>
+      </form>
+    </section>
+  }
+</main>

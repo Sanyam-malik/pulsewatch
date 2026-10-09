@@ -1,0 +1,56 @@
+<main class="monitor-page">
+  <header class="page-heading">
+    <div><h1>Monitors</h1><p>Monitor services and review their recent status.</p></div>
+    <a class="button primary" routerLink="/monitors/new">Create monitor</a>
+  </header>
+
+  <section class="filters" aria-label="Filter monitors">
+    <label><span>Search</span><input type="search" [formControl]="search" placeholder="Search monitors"></label>
+    <label><span>Active</span>
+      <select [formControl]="active">
+        <option value="all">All</option><option value="active">Active</option><option value="inactive">Inactive</option>
+      </select>
+    </label>
+    <label><span>Monitor status</span>
+      <select [formControl]="status">
+        <option value="all">All</option><option value="up">Up</option><option value="down">Down</option><option value="maintenance">Maintenance</option>
+      </select>
+    </label>
+    @if (tags().length) {
+      <fieldset class="tag-filter">
+        <legend>Tags</legend>
+        <div class="tag-options">
+          @for (tag of tags(); track tag.id) {
+            <label class="tag-option">
+              <input type="checkbox" [checked]="selectedTagIds().includes(tag.id ?? '')" (change)="toggleTag(tag.id ?? '')">
+              <span>{{ tag.name }}</span>
+            </label>
+          }
+        </div>
+      </fieldset>
+    }
+    <button class="button secondary clear" type="button" (click)="clearFilters()">Clear filters</button>
+  </section>
+
+  @if (error()) { <p class="error-banner" role="alert">{{ error() }}</p> }
+  @if (loading() && !monitors().length) {
+    <p role="status">Loading monitors…</p>
+  } @else if (!monitors().length) {
+    <section class="empty-state">
+      <h2>No monitors found</h2>
+      <p>Create a monitor or adjust your filters.</p>
+      <a class="button primary" routerLink="/monitors/new">Create your first monitor</a>
+    </section>
+  } @else {
+    <section aria-label="Monitors">
+      @for (monitor of monitors(); track monitor.id) {
+        <app-monitor-card [monitor]="monitor"></app-monitor-card>
+      }
+    </section>
+    @if (hasMore()) {
+      <button class="button secondary load-more" type="button" (click)="loadMore()" [disabled]="loadingMore()">
+        {{ loadingMore() ? 'Loading…' : 'Load more' }}
+      </button>
+    }
+  }
+</main>

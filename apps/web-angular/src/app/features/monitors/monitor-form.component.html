@@ -1,0 +1,132 @@
+<main class="monitor-page">
+  <a class="back-link" routerLink="/monitors">← Monitors</a>
+  <h1>{{ mode === 'edit' ? 'Edit monitor' : 'Create monitor' }}</h1>
+  <p class="muted">Configure monitor behavior and notifications.</p>
+
+  @if (busy() && mode === 'edit' && !monitor()) {
+    <p role="status">Loading monitor…</p>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <section class="form-section" aria-labelledby="general-heading">
+        <h2 id="general-heading">General</h2>
+        <div class="field-grid">
+          <label>
+            <span>Monitor name</span>
+            <input type="text" [formControl]="getControl('name')" autocomplete="off" required>
+            @if (getControl('name').invalid && getControl('name').touched) {
+              <small class="field-error">Name is required.</small>
+            }
+          </label>
+          <label>
+            <span>Monitor type</span>
+            <select [value]="getControl('type').value" (change)="onTypeChange($any($event.target).value)">
+              @for (type of types; track type) {
+                <option [value]="type">{{ type }}</option>
+              }
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="form-section" aria-labelledby="specific-heading">
+        <h2 id="specific-heading">{{ currentTypeLabel() }} settings</h2>
+        <div class="field-grid">
+          @for (field of fields; track field.key) {
+            <label [class.wide]="field.type === 'textarea'">
+              <span>{{ field.label }} @if (field.required) { <span aria-hidden="true">*</span> }</span>
+              @if (field.type === 'checkbox') {
+                <input type="checkbox" [formControl]="getControl(field.key)">
+              } @else if (field.type === 'textarea') {
+                <textarea rows="4" [formControl]="getControl(field.key)" [placeholder]="field.placeholder ?? ''"
+                  [attr.aria-label]="field.label"></textarea>
+              } @else if (field.type === 'select') {
+                <select [formControl]="getControl(field.key)">
+                  @for (option of field.options ?? []; track option.value) {
+                    <option [value]="option.value">{{ option.label }}</option>
+                  }
+                </select>
+              } @else {
+                <input [type]="field.secret ? 'password' : (field.type === 'number' ? 'number' : 'text')"
+                  [formControl]="getControl(field.key)" [placeholder]="field.placeholder ?? ''"
+                  [attr.min]="field.min ?? null" [attr.max]="field.max ?? null"
+                  [attr.step]="field.type === 'number' ? 1 : null" [required]="field.required ?? false">
+              }
+              @if (field.key === 'pushToken') {
+                <button class="button secondary token-button" type="button" (click)="generatePushToken()">Generate push token</button>
+              }
+              @if (field.help) { <small class="muted">{{ field.help }}</small> }
+              @if (getControl(field.key).invalid && getControl(field.key).touched) {
+                <small class="field-error">Enter a valid {{ field.label.toLowerCase() }}.</small>
+              }
+            </label>
+          }
+        </div>
+      </section>
+
+      <section class="form-section" aria-labelledby="intervals-heading">
+        <h2 id="intervals-heading">Intervals and retries</h2>
+        <div class="field-grid">
+          <label><span>Heartbeat interval (seconds)</span><input type="number" min="20" [formControl]="getControl('interval')"></label>
+          <label><span>Maximum retries</span><input type="number" min="0" [formControl]="getControl('max_retries')"></label>
+          <label><span>Retry interval (seconds)</span><input type="number" min="20" [formControl]="getControl('retry_interval')"></label>
+          <label><span>Request timeout (seconds)</span><input type="number" min="16" [formControl]="getControl('timeout')"></label>
+          <label><span>Resend notification after failures</span><input type="number" min="0" [formControl]="getControl('resend_interval')"></label>
+          <label class="check-field"><input type="checkbox" [formControl]="getControl('active')"><span>Active</span></label>
+        </div>
+      </section>
+
+      @if (hasProxy()) {
+        <section class="form-section" aria-labelledby="proxy-heading">
+          <h2 id="proxy-heading">Proxy</h2>
+          <label>
+            <span>Proxy to use</span>
+            <select [formControl]="getControl('proxy_id')">
+              <option value="">No proxy</option>
+              @for (proxy of proxies(); track proxy.id) {
+                <option [value]="proxy.id">{{ proxy.protocol }}://{{ proxy.host }}:{{ proxy.port }}</option>
+              }
+            </select>
+          </label>
+        </section>
+      }
+
+      <section class="form-section" aria-labelledby="tags-heading">
+        <h2 id="tags-heading">Tags</h2>
+        @if (tags().length) {
+          <div class="option-list">
+            @for (tag of tags(); track tag.id) {
+              <label class="check-field">
+                <input type="checkbox" [checked]="isSelected('tag_ids', tag.id ?? '')"
+                  (change)="addSelection('tag_ids', tag.id ?? '', $any($event.target).checked)">
+                <span class="tag-chip" [style.background-color]="tag.color ?? '#e5e7eb'">{{ tag.name }}</span>
+              </label>
+            }
+          </div>
+        } @else { <p class="muted">No tags available.</p> }
+      </section>
+
+      <section class="form-section" aria-labelledby="notifications-heading">
+        <h2 id="notifications-heading">Notification channels</h2>
+        @if (channels().length) {
+          <div class="option-list">
+            @for (channel of channels(); track channel.id) {
+              <label class="check-field">
+                <input type="checkbox" [checked]="isSelected('notification_ids', channel.id ?? '')"
+                  (change)="addSelection('notification_ids', channel.id ?? '', $any($event.target).checked)">
+                <span>{{ channel.name }}</span>
+              </label>
+            }
+          </div>
+        } @else { <p class="muted">No notification channels are available.</p> }
+      </section>
+
+      @if (error()) { <p class="error-banner" role="alert">{{ error() }}</p> }
+      <div class="form-actions">
+        <a class="button secondary" routerLink="/monitors">Cancel</a>
+        <button class="button primary" type="submit" [disabled]="busy()">
+          {{ busy() ? 'Saving…' : (mode === 'edit' ? 'Save changes' : 'Create monitor') }}
+        </button>
+      </div>
+    </form>
+  }
+</main>

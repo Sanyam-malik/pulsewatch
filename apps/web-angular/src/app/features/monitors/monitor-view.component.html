@@ -1,0 +1,68 @@
+<main class="monitor-page">
+  <a class="back-link" routerLink="/monitors">← Monitors</a>
+  @if (loading()) {
+    <p role="status">Loading monitor…</p>
+  } @else if (monitor(); as item) {
+    <header class="page-heading">
+      <div>
+        <p class="type">{{ item.type }}</p>
+        <h1>{{ item.name || 'Unnamed monitor' }}</h1>
+        <p class="status" [class.paused]="item.active === false">{{ item.active === false ? 'Paused' : statusLabel(item.status) }}</p>
+      </div>
+      <nav class="actions" aria-label="Monitor actions">
+        <a class="button secondary" [routerLink]="['/monitors', item.id, 'edit']">Edit</a>
+        <button class="button secondary" type="button" (click)="clone()">Clone</button>
+        <button class="button secondary" type="button" (click)="reset()" [disabled]="busy()">Reset</button>
+        <button class="button secondary" type="button" (click)="toggleActive()" [disabled]="busy()">
+          {{ item.active === false ? 'Resume' : 'Pause' }}
+        </button>
+        <button class="button danger" type="button" (click)="delete()" [disabled]="busy()">Delete</button>
+      </nav>
+    </header>
+
+    <section class="summary-grid" aria-label="Monitor settings">
+      <div><span>Interval</span><strong>{{ item.interval ?? '—' }} seconds</strong></div>
+      <div><span>Timeout</span><strong>{{ item.timeout ?? '—' }} seconds</strong></div>
+      <div><span>Retries</span><strong>{{ item.max_retries ?? '—' }}</strong></div>
+      <div><span>Retry interval</span><strong>{{ item.retry_interval ?? '—' }} seconds</strong></div>
+      <div><span>Resend interval</span><strong>{{ item.resend_interval ?? '—' }}</strong></div>
+      <div><span>Proxy</span><strong>{{ item.proxy_id || 'None' }}</strong></div>
+      <div class="full"><span>Tags</span><strong>{{ (item.tag_ids ?? []).join(', ') || 'None' }}</strong></div>
+      <div class="full"><span>Notification channels</span><strong>{{ (item.notification_ids ?? []).join(', ') || 'None' }}</strong></div>
+    </section>
+
+    @if (configEntries().length) {
+      <section class="detail-section">
+        <h2>Type settings</h2>
+        <dl>
+          @for (entry of configEntries(); track entry.key) {
+            <div><dt>{{ entry.key }}</dt><dd>{{ formatValue(entry.key, entry.value) }}</dd></div>
+          }
+        </dl>
+      </section>
+    }
+
+    <section class="detail-section">
+      <h2>Recent heartbeats</h2>
+      @if (heartbeats().length) {
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th scope="col">Time</th><th scope="col">Status</th><th scope="col">Response</th><th scope="col">Details</th></tr></thead>
+            <tbody>
+              @for (heartbeat of heartbeats(); track heartbeat.id ?? $index) {
+                <tr>
+                  <td>{{ heartbeat.time ?? heartbeat.end_time ?? '—' }}</td>
+                  <td>{{ statusLabel(heartbeat.status) }}</td>
+                  <td>{{ heartbeat.ping ?? '—' }}</td><td>{{ heartbeat.msg ?? '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else { <p class="muted">No heartbeats are available.</p> }
+    </section>
+  } @else {
+    <p role="status">Monitor not found.</p>
+  }
+  @if (error()) { <p class="error-banner" role="alert">{{ error() }}</p> }
+</main>

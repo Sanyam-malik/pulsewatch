@@ -31,7 +31,7 @@ func ToPascalCase(s string) string {
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Println("Usage: go run scripts/generate_module.go <module_name>")
+		fmt.Println("Usage: go run ./scripts/generate/generate_module.go <module_name> (from apps/server)")
 		os.Exit(1)
 	}
 
@@ -41,7 +41,7 @@ func main() {
 	}
 
 	// Create module directory
-	moduleDir := filepath.Join("src", "modules", moduleName)
+	moduleDir := filepath.Join("internal", "modules", moduleName)
 	if err := os.MkdirAll(moduleDir, 0755); err != nil {
 		fmt.Printf("Error creating module directory: %v\n", err)
 		os.Exit(1)
@@ -106,6 +106,6 @@ func main() {
 	fmt.Printf("\nModule '%s' has been generated successfully!\n", moduleName)
 	fmt.Println("Next steps:")
 	fmt.Println("1. Add your module dependencies in the New<ModuleName> function")
-	fmt.Println("2. Implement your module-specific logic in the Upsert method")
+	fmt.Println("2. Implement your module-specific logic in the service and repository")
 	fmt.Println("3. Add your module to the dependency injection setup")
 }

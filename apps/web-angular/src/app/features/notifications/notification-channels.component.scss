@@ -1,0 +1,56 @@
+:host { display: block; }
+
+.notification-page {
+  width: min(100% - 2rem, 58rem);
+  margin: 0 auto;
+  padding: 2rem 0 4rem;
+}
+
+.page-header, .toolbar, .channel-card, .channel-state, .dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page-header { margin-bottom: 2rem; }
+.page-header h1 { margin: 0.25rem 0; font-size: clamp(1.6rem, 4vw, 2rem); }
+.eyebrow { margin: 0; color: #5665dd; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.description { margin: 0.35rem 0 0; color: #667085; }
+.toolbar { justify-content: flex-end; margin-bottom: 1rem; }
+.toolbar label { font-weight: 600; }
+.toolbar input { width: min(100%, 25rem); min-height: 2.8rem; padding: 0.65rem 0.8rem; border: 1px solid #cfd6e2; border-radius: 0.6rem; font: inherit; }
+.channel-list { display: grid; gap: 0.65rem; }
+.channel-card { min-height: 5rem; padding: 0.8rem 1rem; border: 1px solid #e3e8f0; border-radius: 0.85rem; background: #fff; cursor: pointer; }
+.channel-card:hover, .channel-card:focus-visible { border-color: #b8c0ef; background: #fafaff; outline: none; }
+.channel-info h2 { margin: 0 0 0.35rem; font-size: 1rem; }
+.type-badge, .state-badge { display: inline-flex; align-items: center; min-height: 1.45rem; padding: 0.1rem 0.55rem; border: 1px solid #d0d5dd; border-radius: 99px; color: #475467; font-size: 0.75rem; }
+.state-badge { border-color: #abefc6; background: #ecfdf3; color: #067647; }
+.state-badge.inactive { border-color: #eaecf0; background: #f2f4f7; color: #667085; }
+.default-badge { border-color: #c7d7fe; background: #eff4ff; color: #3538cd; }
+.channel-state { justify-content: flex-start; flex-wrap: wrap; }
+.primary-button, .secondary-button, .danger-button, .delete-button { display: inline-flex; min-height: 2.65rem; align-items: center; justify-content: center; padding: 0.55rem 0.9rem; border: 0; border-radius: 0.6rem; font: inherit; font-weight: 650; text-decoration: none; cursor: pointer; }
+.primary-button { background: #4f5ed7; color: #fff; }
+.primary-button:hover { background: #3f4fc4; }
+.secondary-button { border: 1px solid #d0d5dd; background: #fff; color: #344054; }
+.danger-button, .delete-button { border: 1px solid #fecdca; background: #fff; color: #b42318; }
+.delete-button { min-height: 2.25rem; }
+.empty-state { padding: 2rem; border: 1px dashed #cfd6e2; border-radius: 0.9rem; background: #fff; color: #667085; text-align: center; }
+.empty-state h2 { margin: 0 0 0.5rem; color: #172033; }
+.empty-state p { margin: 0 0 1rem; }
+.load-more { display: flex; margin: 1.25rem auto 0; }
+.error-banner { padding: 0.8rem 1rem; border: 1px solid #fecdca; border-radius: 0.6rem; background: #fef3f2; color: #b42318; }
+.dialog-backdrop { position: fixed; z-index: 10; inset: 0; display: grid; place-items: center; padding: 1rem; background: rgb(16 24 40 / 45%); }
+.confirm-dialog { width: min(100%, 28rem); padding: 1.5rem; border-radius: 1rem; background: #fff; box-shadow: 0 1.5rem 4rem rgb(16 24 40 / 20%); }
+.confirm-dialog h2 { margin: 0 0 0.6rem; font-size: 1.2rem; }
+.confirm-dialog p { color: #667085; }
+.dialog-actions { justify-content: flex-end; margin-top: 1.5rem; }
+button:disabled { cursor: wait; opacity: 0.65; }
+
+@media (max-width: 38rem) {
+  .page-header, .channel-card { align-items: flex-start; }
+  .page-header { flex-direction: column; }
+  .channel-card { flex-wrap: wrap; }
+  .toolbar { align-items: stretch; flex-direction: column; }
+  .toolbar input { width: 100%; }
+}

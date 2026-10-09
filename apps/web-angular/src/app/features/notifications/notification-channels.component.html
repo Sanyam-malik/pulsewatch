@@ -1,0 +1,88 @@
+<main class="notification-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Delivery integrations</p>
+      <h1>Notification channels</h1>
+      <p class="description">Manage where Pulsewatch sends monitor alerts.</p>
+    </div>
+    <a class="primary-button" routerLink="/notification-channels/new">Create channel</a>
+  </header>
+
+  <section class="toolbar" aria-label="Notification channel filters">
+    <label for="channel-search">Search channels</label>
+    <input
+      id="channel-search"
+      type="search"
+      [value]="search"
+      (input)="updateSearch($any($event.target).value)"
+      placeholder="Search by name or provider"
+    />
+  </section>
+
+  @if (error) {
+    <p class="error-banner" role="alert">{{ error }}</p>
+  }
+
+  @if (loading) {
+    <p class="empty-state" role="status">Loading notification channels…</p>
+  } @else if (channels.length === 0 && !error) {
+    <section class="empty-state">
+      <h2>No notification channels yet</h2>
+      <p>Add an integration to receive monitor alerts.</p>
+      <a class="secondary-button" routerLink="/notification-channels/new">Create your first channel</a>
+    </section>
+  } @else {
+    <section class="channel-list" aria-label="Notification channels">
+      @for (channel of channels; track channel.id) {
+        <article
+          class="channel-card"
+          tabindex="0"
+          role="link"
+          [attr.aria-label]="'Edit ' + (channel.name || 'notification channel')"
+          (click)="channel.id && router.navigate(['/notification-channels', channel.id, 'edit'])"
+          (keydown.enter)="channel.id && router.navigate(['/notification-channels', channel.id, 'edit'])"
+        >
+          <div class="channel-info">
+            <h2>{{ channel.name || 'Unnamed channel' }}</h2>
+            <span class="type-badge">{{ channel.type || 'Unknown provider' }}</span>
+          </div>
+          <div class="channel-state">
+            <span class="state-badge" [class.inactive]="channel.active === false">
+              {{ channel.active === false ? 'Inactive' : 'Active' }}
+            </span>
+            @if (channel.is_default) {
+              <span class="state-badge default-badge">Default</span>
+            }
+          </div>
+          <button
+            class="delete-button"
+            type="button"
+            [attr.aria-label]="'Delete ' + (channel.name || 'notification channel')"
+            (click)="confirmDelete(channel, $event)"
+          >Delete</button>
+        </article>
+      }
+    </section>
+
+    @if (loadingMore) {
+      <p class="empty-state" role="status">Loading more channels…</p>
+    } @else if (hasMore) {
+      <button class="secondary-button load-more" type="button" (click)="loadMore()">Load more</button>
+    }
+  }
+
+  @if (channelToDelete) {
+    <div class="dialog-backdrop" role="presentation">
+      <section class="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-title">
+        <h2 id="delete-title">Delete notification channel?</h2>
+        <p>This will permanently delete “{{ channelToDelete.name }}”.</p>
+        <div class="dialog-actions">
+          <button class="secondary-button" type="button" [disabled]="deleting" (click)="cancelDelete()">Cancel</button>
+          <button class="danger-button" type="button" [disabled]="deleting" (click)="deleteChannel()">
+            {{ deleting ? 'Deleting…' : 'Delete channel' }}
+          </button>
+        </div>
+      </section>
+    </div>
+  }
+</main>

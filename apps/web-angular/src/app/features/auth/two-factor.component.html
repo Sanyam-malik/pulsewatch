@@ -1,0 +1,36 @@
+<section class="auth-card" aria-labelledby="two-factor-title">
+  <header class="card-header">
+    <span class="eyebrow">Account security</span>
+    <h1 id="two-factor-title">Two-factor verification</h1>
+    <p>Enter the verification code from your authenticator app.</p>
+  </header>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <label for="two-factor-token">Authentication code</label>
+    <input
+      id="two-factor-token"
+      type="text"
+      formControlName="token"
+      autocomplete="one-time-code"
+      inputmode="numeric"
+      placeholder="Enter your code"
+      [attr.aria-invalid]="form.controls.token.invalid && form.controls.token.touched"
+      [attr.aria-describedby]="form.controls.token.invalid && form.controls.token.touched ? 'token-error' : null"
+      autofocus
+    />
+    @if (form.controls.token.invalid && form.controls.token.touched) {
+      <p class="field-error" id="token-error">Enter your authentication code.</p>
+    }
+
+    @if (error) {
+      <p class="server-error" role="alert">{{ error }}</p>
+    }
+
+    <button class="primary-button" type="submit" [disabled]="loading">
+      {{ loading ? 'Verifying…' : 'Verify and sign in' }}
+    </button>
+    <button class="text-button" type="button" (click)="back.emit()" [disabled]="loading">
+      Back to sign in
+    </button>
+  </form>
+</section>

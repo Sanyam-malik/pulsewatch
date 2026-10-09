@@ -1,0 +1,167 @@
+:host {
+  display: block;
+  min-height: 100%;
+}
+
+.auth-page {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: 2rem 1rem;
+  background:
+    radial-gradient(ellipse at 15% 10%, rgb(91 108 230 / 11%), transparent 32rem),
+    #f7f8fc;
+}
+
+.auth-shell {
+  display: grid;
+  width: min(100%, 28rem);
+  justify-items: center;
+  gap: 1.5rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #172033;
+  font-size: 1.05rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.brand-mark {
+  display: grid;
+  width: 2rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 0.65rem;
+  background: #4f5ed7;
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+.auth-card {
+  width: 100%;
+  padding: clamp(1.5rem, 5vw, 2.5rem);
+  border: 1px solid #e3e8f0;
+  border-radius: 1.25rem;
+  background: #fff;
+  box-shadow: 0 1.5rem 4rem rgb(24 39 75 / 9%);
+}
+
+.card-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.eyebrow {
+  color: #5665dd;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0.65rem 0;
+  color: #172033;
+  font-size: clamp(1.5rem, 5vw, 1.85rem);
+  letter-spacing: -0.04em;
+}
+
+.card-header p,
+.page-note {
+  margin: 0;
+  color: #667085;
+  line-height: 1.5;
+}
+
+form,
+.field {
+  display: grid;
+  gap: 0.7rem;
+}
+
+form {
+  gap: 1.1rem;
+}
+
+label {
+  color: #344054;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+input {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #cfd6e2;
+  border-radius: 0.65rem;
+  color: #172033;
+  font: inherit;
+}
+
+input:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgb(86 101 221 / 35%);
+  outline-offset: 2px;
+}
+
+.field-error,
+.server-error {
+  margin: 0;
+  color: #b42318;
+  font-size: 0.875rem;
+}
+
+.server-error {
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #fecdca;
+  border-radius: 0.6rem;
+  background: #fef3f2;
+}
+
+.primary-button {
+  min-height: 3rem;
+  margin-top: 0.35rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: #4f5ed7;
+  color: #fff;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: #3f4fc4;
+}
+
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.auth-switch {
+  margin: 1.5rem 0 0;
+  color: #667085;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.auth-switch a {
+  color: #4f5ed7;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.auth-switch a:hover {
+  text-decoration: underline;
+}
+
+.page-note {
+  font-size: 0.8rem;
+}

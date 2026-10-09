@@ -1,0 +1,19 @@
+.monitor-page { max-width:1120px; margin:0 auto; padding:1.5rem; color:#172033; }
+.back-link { display:inline-block; margin-bottom:1rem; color:#3157a4; }
+.page-heading { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; }
+h1 { margin:.1rem 0; font-size:1.8rem; } .type,.muted { color:#596579; }
+.type { text-transform:capitalize; margin:0; } .status { color:#167142; font-weight:700; margin:.4rem 0; } .status.paused { color:#806009; }
+.actions { display:flex; flex-wrap:wrap; gap:.5rem; }
+.button { display:inline-block; border:1px solid #ccd3df; border-radius:.4rem; padding:.6rem .85rem; background:#fff; color:#24334d; font:inherit; font-weight:600; text-decoration:none; cursor:pointer; }
+.button:disabled { opacity:.6; cursor:wait; } .danger { color:#a22020; border-color:#d4a6a6; }
+.summary-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.8rem; margin:1.4rem 0; }
+.summary-grid div { display:flex; flex-direction:column; gap:.35rem; min-width:0; padding:.9rem; border:1px solid #d8deea; border-radius:.5rem; background:#fff; overflow-wrap:anywhere; }
+.summary-grid span,dt { color:#596579; font-size:.9rem; }
+.summary-grid .full { grid-column:1/-1; }
+.detail-section { margin:1.3rem 0; padding:1rem; border:1px solid #d8deea; border-radius:.65rem; background:#fff; }
+.detail-section h2 { font-size:1.15rem; margin:0 0 .85rem; }
+dl { margin:0; } dl div { display:grid; grid-template-columns:minmax(150px, .35fr) 1fr; gap:1rem; padding:.6rem 0; border-bottom:1px solid #e6e9ef; overflow-wrap:anywhere; } dl div:last-child { border-bottom:0; } dt,dd { margin:0; }
+.table-scroll { overflow-x:auto; } table { width:100%; border-collapse:collapse; text-align:left; } th,td { padding:.65rem .5rem; border-bottom:1px solid #e6e9ef; vertical-align:top; }
+.error-banner { color:#a22020; border-left:4px solid #b42318; padding:.75rem; background:#fff3f2; }
+button:focus-visible,a:focus-visible { outline:3px solid #6b91ed; outline-offset:2px; }
+@media(max-width:680px) { .monitor-page { padding:1rem; } .summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } dl div { grid-template-columns:1fr; gap:.2rem; } }

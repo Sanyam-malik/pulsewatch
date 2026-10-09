@@ -1,0 +1,30 @@
+.monitor-page { max-width: 980px; margin: 0 auto; padding: 1.5rem; color: #172033; }
+.back-link { display: inline-block; margin-bottom: 1rem; color: #3157a4; }
+h1 { margin: 0; font-size: 1.8rem; }
+.muted { color: #596579; }
+.form-section { border: 1px solid #d8deea; border-radius: .7rem; padding: 1.2rem; margin: 1.2rem 0; background: #fff; }
+.form-section h2 { margin: 0 0 1rem; font-size: 1.15rem; }
+.field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+label { display: flex; flex-direction: column; gap: .4rem; min-width: 0; font-weight: 550; }
+input:not([type=checkbox]), select, textarea { box-sizing: border-box; width: 100%; min-height: 2.65rem; border: 1px solid #aab4c4; border-radius: .35rem; padding: .55rem .65rem; font: inherit; background: #fff; color: #172033; }
+textarea { resize: vertical; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid #6b91ed; outline-offset: 2px; }
+.wide { grid-column: 1 / -1; }
+.check-field { display: inline-flex; flex-direction: row; align-items: center; gap: .55rem; min-height: 2rem; font-weight: 450; }
+.option-list { display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; }
+.tag-chip { padding: .15rem .55rem; border-radius: 999px; }
+.field-error, .error-banner { color: #a22020; }
+.error-banner { border-left: 4px solid #b42318; padding: .75rem; background: #fff3f2; }
+.form-actions { display: flex; justify-content: flex-end; gap: .75rem; margin: 1.2rem 0 2rem; }
+.button { border: 1px solid transparent; border-radius: .4rem; padding: .65rem 1rem; font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; }
+.button:disabled { opacity: .6; cursor: wait; }
+.token-button { align-self:flex-start; }
+.primary { color: #fff; background: #244ea2; }
+.secondary { color: #24334d; background: #eef1f6; border-color: #ccd3df; }
+@media (max-width: 640px) {
+  .monitor-page { padding: 1rem; }
+  .field-grid { grid-template-columns: 1fr; }
+  .wide { grid-column: auto; }
+  .form-actions { flex-direction: column-reverse; }
+  .form-actions .button { text-align: center; }
+}
