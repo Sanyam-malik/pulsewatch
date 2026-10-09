@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/sanyam-malik/pulsewatch/internal/modules/events"
 	"go.uber.org/zap"
 )
 
@@ -17,12 +18,19 @@ type Service interface {
 }
 
 type ServiceImpl struct {
-	repo   Repository
-	logger *zap.SugaredLogger
+	repo     Repository
+	eventBus events.EventBus
+	logger   *zap.SugaredLogger
 }
 
-func NewService(repo Repository, logger *zap.SugaredLogger) Service {
-	return &ServiceImpl{repo: repo, logger: logger.Named("[incident-service]")}
+type NotificationEvent struct {
+	GroupID  string `json:"group_id"`
+	Incident *Model `json:"incident"`
+	Update   Update `json:"update"`
+}
+
+func NewService(repo Repository, eventBus events.EventBus, logger *zap.SugaredLogger) Service {
+	return &ServiceImpl{repo: repo, eventBus: eventBus, logger: logger.Named("[incident-service]")}
 }
 
 func (s *ServiceImpl) Create(ctx context.Context, dto *CreateDto) (*Model, error) {
@@ -33,7 +41,12 @@ func (s *ServiceImpl) Create(ctx context.Context, dto *CreateDto) (*Model, error
 	if message == "" || utf8.RuneCountInString(message) > 4000 {
 		return nil, errors.New("incident message must be between 1 and 4000 characters")
 	}
-	return s.repo.Create(ctx, dto.StatusPageID, title, StatusInvestigating, message)
+	model, err := s.repo.Create(ctx, dto.StatusPageID, title, StatusInvestigating, message)
+	if err != nil {
+		return nil, err
+	}
+	s.publishNotification(model)
+	return model, nil
 }
 
 func (s *ServiceImpl) FindAll(ctx context.Context) ([]*Model, error) {
@@ -48,7 +61,12 @@ func (s *ServiceImpl) AddUpdate(ctx context.Context, id string, dto *AddUpdateDt
 	if message == "" || utf8.RuneCountInString(message) > 4000 {
 		return nil, errors.New("incident update must be between 1 and 4000 characters")
 	}
-	return s.repo.AddUpdate(ctx, id, dto.Status, message)
+	model, err := s.repo.AddUpdate(ctx, id, dto.Status, message)
+	if err != nil {
+		return nil, err
+	}
+	s.publishNotification(model)
+	return model, nil
 }
 
 func (s *ServiceImpl) FindPublicByStatusPageSlug(ctx context.Context, slug string) ([]*Model, error) {
@@ -62,4 +80,25 @@ func validStatus(status string) bool {
 	default:
 		return false
 	}
+}
+
+func (s *ServiceImpl) publishNotification(model *Model) {
+	if model == nil {
+		return
+	}
+	if model.GroupID == "" || len(model.Updates) == 0 {
+		s.logger.Errorw("Cannot publish incident notification without workspace and update",
+			"incident_id", model.ID,
+			"group_id", model.GroupID,
+		)
+		return
+	}
+	s.eventBus.Publish(events.Event{
+		Type: events.IncidentUpdated,
+		Payload: &NotificationEvent{
+			GroupID:  model.GroupID,
+			Incident: model,
+			Update:   model.Updates[len(model.Updates)-1],
+		},
+	})
 }

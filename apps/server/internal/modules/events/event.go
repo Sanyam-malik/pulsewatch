@@ -22,6 +22,8 @@ const (
 	CertificateExpiry EventType = "certificate.expiry"
 	// ImportantHeartbeat is emitted when a heartbeat is important for notification purposes
 	ImportantHeartbeat EventType = "important.heartbeat"
+	// IncidentUpdated is emitted when an incident is created or receives a status update
+	IncidentUpdated EventType = "incident.updated"
 )
 
 // Event represents a generic event with a type and payload

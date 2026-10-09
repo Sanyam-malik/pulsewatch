@@ -9,11 +9,9 @@
     "dev:worker": "turbo run dev:worker",
     "dev:ingester": "turbo run dev:ingester",
     "lint": "turbo run lint",
-    "check-types": "turbo run check-types",
-    "e2e": "pnpm exec playwright test"
+    "check-types": "turbo run check-types"
   },
   "devDependencies": {
-    "@playwright/test": "^1.53.1",
     "@types/node": "22.15.17",
     "turbo": "^2.5.4",
     "nodemon": "^3.1.10"

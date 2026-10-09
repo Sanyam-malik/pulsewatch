@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://sanyam-malik.github.io/pulsewatch/docs/sitemap.xml

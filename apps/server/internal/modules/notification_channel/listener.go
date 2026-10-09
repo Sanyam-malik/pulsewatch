@@ -3,15 +3,19 @@ package notification_channel
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/sanyam-malik/pulsewatch/internal/config"
 	"github.com/sanyam-malik/pulsewatch/internal/infra"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/auth"
 	"github.com/sanyam-malik/pulsewatch/internal/modules/certificate"
 	"github.com/sanyam-malik/pulsewatch/internal/modules/events"
 	"github.com/sanyam-malik/pulsewatch/internal/modules/heartbeat"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/incident"
 	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor"
 	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_notification"
+	"github.com/sanyam-malik/pulsewatch/internal/modules/monitor_status_page"
 	"github.com/sanyam-malik/pulsewatch/internal/modules/notification_channel/providers"
-	"strings"
 
 	"go.uber.org/dig"
 	"go.uber.org/zap"
@@ -23,6 +27,7 @@ type NotificationEventListener struct {
 	monitorSvc                 monitor.Service
 	heartbeatService           heartbeat.Service
 	monitorNotificationService monitor_notification.Service
+	monitorStatusPageService   monitor_status_page.Service
 	logger                     *zap.SugaredLogger
 }
 
@@ -32,6 +37,7 @@ type NotificationEventListenerParams struct {
 	MonitorSvc                 monitor.Service
 	HeartbeatService           heartbeat.Service
 	MonitorNotificationService monitor_notification.Service
+	MonitorStatusPageService   monitor_status_page.Service
 	Logger                     *zap.SugaredLogger
 	Config                     *config.Config
 }
@@ -72,6 +78,7 @@ func NewNotificationEventListener(p NotificationEventListenerParams) *Notificati
 		monitorSvc:                 p.MonitorSvc,
 		heartbeatService:           p.HeartbeatService,
 		monitorNotificationService: p.MonitorNotificationService,
+		monitorStatusPageService:   p.MonitorStatusPageService,
 		logger:                     p.Logger,
 	}
 }
@@ -80,6 +87,91 @@ func NewNotificationEventListener(p NotificationEventListenerParams) *Notificati
 func (l *NotificationEventListener) Subscribe(eventBus events.EventBus) {
 	eventBus.Subscribe(events.ImportantHeartbeat, l.handleNotifyEvent)
 	eventBus.Subscribe(events.CertificateExpiry, l.handleCertificateExpiryEvent)
+	eventBus.Subscribe(events.IncidentUpdated, l.handleIncidentUpdatedEvent)
+}
+
+func (l *NotificationEventListener) handleIncidentUpdatedEvent(event events.Event) {
+	payload, ok := infra.UnmarshalEventPayload[incident.NotificationEvent](event)
+	if !ok || payload.Incident == nil || payload.GroupID == "" || payload.Incident.StatusPageID == "" {
+		l.logger.Error("Failed to unmarshal valid incident notification event")
+		return
+	}
+
+	ctx := auth.WithIdentity(context.Background(), payload.GroupID, auth.RoleMember)
+	statusPageMonitors, err := l.monitorStatusPageService.GetMonitorsForStatusPage(ctx, payload.Incident.StatusPageID)
+	if err != nil {
+		l.logger.Errorw("Failed to get monitors for incident status page", "status_page_id", payload.Incident.StatusPageID, "error", err)
+		return
+	}
+
+	channelMonitors := make(map[string]*monitor.Model)
+	channelIDs := make([]string, 0)
+	seenChannels := make(map[string]struct{})
+	for _, statusPageMonitor := range statusPageMonitors {
+		if statusPageMonitor == nil || statusPageMonitor.MonitorID == "" {
+			continue
+		}
+		monitorModel, err := l.monitorSvc.FindByID(ctx, statusPageMonitor.MonitorID)
+		if err != nil {
+			l.logger.Errorw("Failed to get incident notification monitor", "monitor_id", statusPageMonitor.MonitorID, "error", err)
+			continue
+		}
+		if monitorModel == nil || !monitorModel.Active {
+			continue
+		}
+		monitorNotifications, err := l.monitorNotificationService.FindByMonitorID(ctx, monitorModel.ID)
+		if err != nil {
+			l.logger.Errorw("Failed to get incident notification channels", "monitor_id", monitorModel.ID, "error", err)
+			continue
+		}
+		for _, monitorNotification := range monitorNotifications {
+			if monitorNotification == nil || monitorNotification.NotificationID == "" {
+				continue
+			}
+			if _, exists := seenChannels[monitorNotification.NotificationID]; exists {
+				continue
+			}
+			seenChannels[monitorNotification.NotificationID] = struct{}{}
+			channelIDs = append(channelIDs, monitorNotification.NotificationID)
+			channelMonitors[monitorNotification.NotificationID] = monitorModel
+		}
+	}
+
+	message := formatIncidentNotification(payload)
+	for _, channelID := range channelIDs {
+		notificationChannel, err := l.service.FindByID(ctx, channelID)
+		if err != nil {
+			l.logger.Errorw("Failed to get incident notification channel", "notification_id", channelID, "error", err)
+			continue
+		}
+		if notificationChannel == nil || !notificationChannel.Active {
+			continue
+		}
+		if notificationChannel.Config == nil {
+			l.logger.Warnw("Skipping incident notification channel without config", "notification_id", channelID)
+			continue
+		}
+		integration, ok := GetNotificationChannelProvider(notificationChannel.Type)
+		if !ok {
+			l.logger.Warnw("No integration registered for incident notification type", "type", notificationChannel.Type)
+			continue
+		}
+		if err := integration.Validate(*notificationChannel.Config); err != nil {
+			l.logger.Errorw("Invalid incident notification config", "notification_id", channelID, "error", err)
+			continue
+		}
+		if err := integration.Send(ctx, *notificationChannel.Config, message, channelMonitors[channelID], nil); err != nil {
+			l.logger.Errorw("Failed to send incident notification", "notification_id", channelID, "error", err)
+		}
+	}
+}
+
+func formatIncidentNotification(payload *incident.NotificationEvent) string {
+	message := fmt.Sprintf("Incident update: %s\nStatus: %s", payload.Incident.Title, payload.Update.Status)
+	if payload.Incident.StatusPageTitle != "" {
+		message += fmt.Sprintf("\nStatus page: %s", payload.Incident.StatusPageTitle)
+	}
+	return message + "\n\n" + payload.Update.Message
 }
 
 func (l *NotificationEventListener) handleNotifyEvent(event events.Event) {

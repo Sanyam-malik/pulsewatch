@@ -48,12 +48,6 @@ yarn-error.log*
 
 tmp
 
-# Playwright
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
-
 package-lock.json
 
 storageState.json

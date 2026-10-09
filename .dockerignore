@@ -20,8 +20,6 @@ yarn-error.log*
 dist
 build
 *.log
-playwright-report
-test-results
 coverage
 .nyc_output
 .next
